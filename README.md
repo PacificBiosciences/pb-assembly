@@ -1,4 +1,3 @@
-<h1 align="center"><img width="200px" src="img/falcon_icon2.png" alt="logo" /></h1>
 <h1 align="center">pb-assembly</h1>
 <p align="center">PacBio Assembly Tool Suite:
     Subreads in ⇨ Assembly out
@@ -7,6 +6,7 @@
 ***
 
 # Availability
+
 The latest pre-release, unstable, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
 
     conda install pb-assembly
@@ -14,7 +14,9 @@ The latest pre-release, unstable, experts-only linux/mac binaries can be install
 Alternatively, if you don't have administrator access you can install the pb-assembly suite into an environment 
 in your $HOME directory
 
-    conda create -n pb-assembly pb-assembly
+    conda create -n denovo_asm
+    source activate denovo_asm
+    conda install pb-assembly
     
 If you are looking for a GUI based long read denovo genome assembler, you are urged to learn about 
 [HGAP4](https://www.pacb.com/videos/tutorial-hgap4-de-novo-assembly-application/)
@@ -34,6 +36,7 @@ Furthermore, the command-line options are not stable yet,
 and can change at any point, do not rely on it yet.
 
 # Scope
+
 _pb-assembly_ is the bioconda recipe encompassing all code and dependencies necessary to
 run the FALCON assembly pipeline and subsequently attempt to phase your genome with FALCON_unzip
 and finally polish with arrow.
@@ -42,16 +45,9 @@ Installed package recipes include:
 
     - pb-falcon
     - pb-dazzler
-    - future >=0.16.0 # [not py3k]
-    - nim-falcon
-    - pb-dazzler
-    - pbalign
     - genomicconsensus
-    - blasr
-    - minimap2
-    - mummer
-    - samtools
-
+    - etc (all other dependencies)
+    
 # Overview
 
 FALCON and FALCON-Unzip are de novo genome assemblers for PacBio long reads, also known as 
@@ -86,20 +82,23 @@ the FALCON Assembly pipeline were written by Gene Meyers and are extensively doc
 raw read overlapping and consensus calling, also known as **pre-assembly**, pre-assembled read overlapping
 or **pread overlapping**, and finally the assembly itself.
 
-Here is a sample [fc_run.cfg](file://cfgs/fc_run_200kb.cfg) that was designed to work with the 200kb test case found
+Here is a sample [fc_run.cfg](cfgs/fc_run_200kb.cfg) that was designed to work with the 200kb test case found
 below
 
-Here is a sample [fc_run.cfg](file://cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb Human assembly.
+Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb Human assembly.
  
 Below is a breakdown of the configuration options available to FALCON
 
 #### Input
 
-    [General]
-    input_fofn=input.fofn
-    input_type=raw
-    pa_DBdust_option=
-    pa_fasta_filter_option=pass
+[General]
+
+```ini
+input_fofn=input.fofn
+input_type=raw
+pa_DBdust_option=
+pa_fasta_filter_option=pass
+```
 
 Your list of paths to the input fasta files is specified in your `input_fofn` and your `input_type` can be
 either `raw` or `pread`. If specifying `pread`, the pipeline will skip the entire `0-rawreads` pre-assembly phase.
@@ -122,8 +121,10 @@ Recognized values are described below
 
 #### Data Partitioning
 
-    pa_DBsplit_option=-x500 -s200
-    ovlp_DBsplit_option=-x500 -s200
+```ini
+pa_DBsplit_option=-x500 -s200
+ovlp_DBsplit_option=-x500 -s200
+```
 
 For the first and second stages of FALCON, the data needs to be read in to a 
 [dazzler DB](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/). The `-x` flag filters 
@@ -132,8 +133,10 @@ reads smaller than what's specified while the `-s` flag controls the size of DB 
 
 #### Repeat Masking
 
-    pa_HPCTANmask_option=
-    pa_REPmask_code=0,300;0,300;0,300
+```ini
+pa_HPCTANmask_option=
+pa_REPmask_code=0,300;0,300;0,300
+```
 
 Repeat masking occurs in two phases, **Tandem** and **Interspersed**. Tandem repeat masking is run
 with a modified version of `daligner` called `datander` and thus uses a similar 
@@ -150,15 +153,17 @@ For information and theory on how to set up your rounds of repeat masking, consu
 [blog post](https://dazzlerblog.wordpress.com/2016/04/01/detecting-and-soft-masking-repeats/).
 
 
-####Pre-assembly
+#### Pre-assembly
 
-    genome_size=0
-    seed_coverage=20
-    length_cutoff=1000    
-    pa_HPCdaligner_option=-v -B128 -M24
-    pa_daligner_option=-e.8 -l2000 -k18 -h480  -w8 -s100
-    falcon_sense_option=--output-multi --min-idt 0.70 --min-cov 2 --max-n-read 1800
-    falcon_sense_greedy=False
+```ini
+genome_size=0
+seed_coverage=20
+length_cutoff=1000    
+pa_HPCdaligner_option=-v -B128 -M24
+pa_daligner_option=-e.8 -l2000 -k18 -h480  -w8 -s100
+falcon_sense_option=--output-multi --min-idt 0.70 --min-cov 2 --max-n-read 1800
+falcon_sense_greedy=False
+```
 
 If you wish to auto-calculate your seed read coverage, then it's necessary to enter your `genome_size` in base
 pairs, the desired `seed_coverage` as well as set `length_cutoff=-1` to force the auto-calculation. Alternatively, 
@@ -188,21 +193,25 @@ By default, `-fo` are the parameters passed to `LA4Falcon`. The option `falcon_s
  broken.
 
 
-####Pread overlapping
+#### Pread overlapping
 
-    ovlp_daligner_option=-e.96 -s1000 -h60 -t32
-    ovlp_HPCdaligner_option=-v -M24 -l500
+```ini
+ovlp_daligner_option=-e.96 -s1000 -h60 -t32
+ovlp_HPCdaligner_option=-v -M24 -l500
+```
 
 The second phase of overlapping of corrected reads occurs in a similar fashion to the overlapping performed in the
 pre-assembly, however no repeat masking is performed as the repeats have already been masked, no consensus is
 called and overlaps are simply identified to be fed into the final assembly. The parameter options work the same 
 was as described above in the Pre-assembly section.
 
-####Final Assembly
+#### Final Assembly
 
-    overlap_filtering_setting=--max-diff 100 --max-cov 100 --min-cov 2
-    fc_ovlp_to_graph_option=
-    length_cutoff_pr=1000
+```ini
+overlap_filtering_setting=--max-diff 100 --max-cov 100 --min-cov 2
+fc_ovlp_to_graph_option=
+length_cutoff_pr=1000
+```
 
 The parameter `overlap_filter_setting` allows one to set criteria for filtering corrected read overlaps. 
 `--max-diff` filters overlaps that have a coverage difference between the 5' and 3' ends larger than specified. 
@@ -213,13 +222,16 @@ at the expense of additional chimeric / mis-assemblies.
 `length_cutoff_pr` is the minimum length of pre-assembled *preads* used for the final assembly. Typically you
 want to set this value to allow for approximately 15-30X coverage of corrected reads in the final assembly.
 
-####Miscellaneous configuration options
+#### Miscellaneous configuration options
 
 Additional configuration options that don't necessarily fit into one of the previous categories are described here.
 
-    target=assembly
-    skip_checks=False
-    LA4Falcon_preload=false
+
+```ini
+target=assembly
+skip_checks=False
+LA4Falcon_preload=false
+```
 
 FALCON can be configured to stop after any of it's three stages with the `target` flag set to either
 `overlapping`, `pre-assembly` or `assembly`. Each option will stop the pipeline at the end of it's corresponding
@@ -232,29 +244,31 @@ The parameter `LA4Falcon_preload` passes the `-P` parameter to `LA4Falcon` which
 into memory. On slow filesystems this can make a huge difference due to the random-access; but it will
 dramatically increase the memory requirement for the consensus stage.
 
-####Job Distribution
+#### Job Distribution
 
-    [job.defaults]
-    job_type=sge
-    pwatcher_type=blocking
-    JOB_QUEUE = default
-    MB = 32768
-    NPROC = 6
-    njobs = 32
-    submit = qsub -S /bin/bash -sync y -V  \
-      -q ${JOB_QUEUE}     \
-      -N ${JOB_NAME}      \
-      -o "${JOB_STDOUT}"  \
-      -e "${JOB_STDERR}"  \
-      -pe smp ${NPROC}    \
-      -l h_vmem=${MB}M    \
-      "${JOB_SCRIPT}"
-    
-    [job.step.da]
-    NPROC=4
-    MB=49152
-    njobs=240
-    
+```ini
+[job.defaults]
+job_type=sge
+pwatcher_type=blocking
+JOB_QUEUE = default
+MB = 32768
+NPROC = 6
+njobs = 32
+submit = qsub -S /bin/bash -sync y -V  \
+  -q ${JOB_QUEUE}     \
+  -N ${JOB_NAME}      \
+  -o "${JOB_STDOUT}"  \
+  -e "${JOB_STDERR}"  \
+  -pe smp ${NPROC}    \
+  -l h_vmem=${MB}M    \
+  "${JOB_SCRIPT}"
+
+[job.step.da]
+NPROC=4
+MB=49152
+njobs=240
+```
+ 
 Default job configuration options are specified in the `[job.defaults]` section of your config file. The first 
 option you should set is for the `job_type`. Allowed values are `sge`, `pbs`, `torque`, `slurm`, `lsf` and `local`. 
 If running on a cluster, you need to configure the `submit` string to work with your job scheduler. The `submit`
@@ -285,11 +299,13 @@ section, the `[job.defaults]` will be applied. `[job.step.da]`, `[job.step.la]`,
  
 ### FALCON_unzip Configuration
 
-    [General]
-    max_n_open_files = 1000
-    [Unzip]
-    input_fofn=input.fofn
-    input_bam_fofn=input_bam.fofn
+```ini
+[General]
+max_n_open_files = 1000
+[Unzip]
+input_fofn=input.fofn
+input_bam_fofn=input_bam.fofn
+```
 
 Relative to setting FALCON parameters, FALCON_unzip is a breeze as the majority of the options have to do
 exclusively with job distribution. The first and only setting in the [General] section is for `max_n_open_files`.
@@ -303,14 +319,18 @@ specify a list of your input bam files with `input_bam_fofn`.
 
 Here is a sample [fc_unzip.cfg](file://cfgs/fc_unzip.cfg) that will need to be tuned to your compute environment.
 
-####Job Distribution
+#### Job Distribution
 
 Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only difference
 are the job specific settings specific to FALCON_unzip. Available sections are `[job.step.unzip_track_reads]`, 
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
 
+## Example test case
+
+TODO
 
 ## FAQ
+
 TODO
 
 
