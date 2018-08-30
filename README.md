@@ -94,6 +94,7 @@ Here is a sample [fc_run.cfg](file://cfgs/fc_run_human.cfg) that was used with a
 Below is a breakdown of the configuration options available to FALCON
 
 #### Input
+
     [General]
     input_fofn=input.fofn
     input_type=raw
@@ -120,6 +121,7 @@ Recognized values are described below
 |streamed-internal-median| Applies the median-length ZMW filter only on internal subreads (ZMWs with >= 3 subreads) by running a single pass over the data. The input subreads should be groupped by ZMW. For ZMWs with < 3 subreads, the maximum-length one is selected.
 
 #### Data Partitioning
+
     pa_DBsplit_option=-x500 -s200
     ovlp_DBsplit_option=-x500 -s200
 
@@ -129,6 +131,7 @@ reads smaller than what's specified while the `-s` flag controls the size of DB 
 
 
 #### Repeat Masking
+
     pa_HPCTANmask_option=
     pa_REPmask_code=0,300;0,300;0,300
 
@@ -148,6 +151,7 @@ For information and theory on how to set up your rounds of repeat masking, consu
 
 
 ####Pre-assembly
+
     genome_size=0
     seed_coverage=20
     length_cutoff=1000    
@@ -185,6 +189,7 @@ By default, `-fo` are the parameters passed to `LA4Falcon`. The option `falcon_s
 
 
 ####Pread overlapping
+
     ovlp_daligner_option=-e.96 -s1000 -h60 -t32
     ovlp_HPCdaligner_option=-v -M24 -l500
 
@@ -194,6 +199,7 @@ called and overlaps are simply identified to be fed into the final assembly. The
 was as described above in the Pre-assembly section.
 
 ####Final Assembly
+
     overlap_filtering_setting=--max-diff 100 --max-cov 100 --min-cov 2
     fc_ovlp_to_graph_option=
     length_cutoff_pr=1000
@@ -208,9 +214,9 @@ at the expense of additional chimeric / mis-assemblies.
 want to set this value to allow for approximately 15-30X coverage of corrected reads in the final assembly.
 
 ####Miscellaneous configuration options
+
 Additional configuration options that don't necessarily fit into one of the previous categories are described here.
 
-    
     target=assembly
     skip_checks=False
     LA4Falcon_preload=false
@@ -226,8 +232,8 @@ The parameter `LA4Falcon_preload` passes the `-P` parameter to `LA4Falcon` which
 into memory. On slow filesystems this can make a huge difference due to the random-access; but it will
 dramatically increase the memory requirement for the consensus stage.
 
-
 ####Job Distribution
+
     [job.defaults]
     job_type=sge
     pwatcher_type=blocking
@@ -277,8 +283,6 @@ LAshow/LAsort stages respectively while `asm` refers to the final assembly. If y
 section, the `[job.defaults]` will be applied. `[job.step.da]`, `[job.step.la]`, `[job.step.cns]`, `[job.step.pda]`, 
 `[job.step.pla]`, and `[job.step.asm]` are the available sections.
  
-
-
 ### FALCON_unzip Configuration
 
     [General]
@@ -306,8 +310,6 @@ are the job specific settings specific to FALCON_unzip. Available sections are `
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
 
 
-
-
 ## FAQ
 TODO
 
@@ -323,7 +325,7 @@ in the pre-assembly stats file.
 
 In the next round of HGAP, the preads, are aligned to each other and assembled into genomic contigs.
 
-<img width="200px" src="img/HGAP.png" alt="HGAP" />
+<img width="600px" src="img/HGAP.png" alt="HGAP" />
 
 For more complex genomes assembled with FALCON, “bubbles” in the contig-assembly graph that result 
 from structural variation between haplotypes may be resolved as associate and primary contigs. 
@@ -333,7 +335,7 @@ not extend between haplotigs. Thus, in part C) of the figure below, haplotig_1 a
 originate from different parental haplotypes. Additional information is needed to phase the haplotype 
 blocks with each other.
 
-<img width="200px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" />
+<img width="600px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" />
 
 Associate contig IDs contain the name of their primary contig but the precise location of alignment must 
 be determined with third party tools such as NUCmer. For example, in a FALCON assembly, 000123F-010-01 
@@ -344,7 +346,7 @@ Below are examples of alignments between associate and primary contigs from FALC
 primary contigs from FALCON-Unzip. Alignments were built with NUCmer and visualized with Assemblytics. 
 Precise coordinates may be obtained with the show-coords utilty from MUMmer.
 
-<img width="200px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" />
+<img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" />
 
 
 ## Acknowledgements
