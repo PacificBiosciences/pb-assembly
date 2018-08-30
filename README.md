@@ -98,9 +98,9 @@ Below is a breakdown of the configuration options available to FALCON
 
 #### Input
 
-[General]
 
 ```ini
+[General]
 input_fofn=input.fofn
 input_type=raw
 pa_DBdust_option=
