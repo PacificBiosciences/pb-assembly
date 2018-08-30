@@ -9,14 +9,18 @@
 
 The latest pre-release, unstable, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
 
-    conda install pb-assembly
+```bash
+conda install pb-assembly
+```
 
 Alternatively, if you don't have administrator access you can install the pb-assembly suite into an environment 
 in your $HOME directory
 
-    conda create -n denovo_asm
-    source activate denovo_asm
-    conda install pb-assembly
+```bash
+conda create -n denovo_asm
+source activate denovo_asm
+conda install pb-assembly
+```
     
 If you are looking for a GUI based long read denovo genome assembler, you are urged to learn about 
 [HGAP4](https://www.pacb.com/videos/tutorial-hgap4-de-novo-assembly-application/)
@@ -64,11 +68,14 @@ phased primary contigs and fully phased haplotigs which represent divergent hapl
 
 ## Assemble
 
-    fc_run fc_run.cfg
-    
+```bash
+fc_run fc_run.cfg
+```
+
 ## Unzip and polish
-    
-    fc_unzip fc_unzip.cfg
+```bash   
+fc_unzip fc_unzip.cfg
+```
 
 ## Configuration
 
