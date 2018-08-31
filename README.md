@@ -371,9 +371,9 @@ contig configuration (associated contig) can be "associated" with it's primary
 based on it's ``XXXXXXF`` prefix.
 
 Some basic information about how the associated contigs are generated can be found
-in [this speakerdeck](https://speakerdeck.com/jchin/string-graph-assembly-for-diploid-genomes-with-long-reads)
-, [here](https://speakerdeck.com/jchin/learning-genome-structrues-from-de-novo-assembly-and-long-read-mapping)
-(pg.14-15) [and here](https://speakerdeck.com/jchin/learning-genome-structrues-from-de-novo-assembly-and-long-read-mapping).
+in [this speakerdeck](https://speakerdeck.com/jchin/string-graph-assembly-for-diploid-genomes-with-long-reads), 
+and also [here](https://speakerdeck.com/jchin/learning-genome-structrues-from-de-novo-assembly-and-long-read-mapping)
+(pg.14-15).
 
 Conceptually, if a genome is haploid, then all contigs should be primary contigs. However, in 
 general there will usually still be some associated contigs generated. This is likely due to:
@@ -394,7 +394,7 @@ Typically, when there are big structural variations between homologous chromosom
 paths in the assembly graph and the alternative paths correspond to the associated contigs. In such case,
 the primary contigs are “fused contigs” from both haplotypes.
 
-FALCON_unzip is currently being developed to resolve the haplotypes so :term:`haplotigs <haplotig>` can
+FALCON_unzip is currently being developed to resolve the haplotypes so *haplotigs* can
 be generated. Two videos illustrating the concept - ([Video 1](https://youtu.be/yC1ujdLUT7Q) ,
 [Video 2](https://youtu.be/vwSyD31eahI))
 
@@ -416,7 +416,7 @@ coupled with widely varying levels of heterozygosity and structural variation le
 process. To understand your FALCON output, it's useful to look at this supplemental figure from the 
 [FALCON_unzip paper](http://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4035.html):
 
-<img width="600px" src="img/heterozygosity.jpg" alt="Heterozygosity levels" />
+<h1 align="center"><img width="600px" src="img/heterozygosity.jpg" alt="Heterozygosity levels" /></h1>
 
 Consider the first line as a cartoon illustrating 3 ranges of heterozygosity (low/medium/high).
 In general, all genomes will have regions that fall into each of these three categories depending on organismal
@@ -439,7 +439,7 @@ primary contigs may contain phase-switches between unzipped regions. The haploti
 or phaseable regions of the genome and are considered fully phased. This means there should be no phase switching within
 a haplotig and each haplotig should represent only one phase. See this figure for reference:
 
-<img width="600px" src="img/phaseswitch.png" alt="Phase switch" />
+<h1 align="center"><img width="600px" src="img/phaseswitch.png" alt="Phase switch" /></h1>
 
 It's also important to note that in high heterozygosity situations, we often see the primary contig fasta file
 approaching 1.5X+ the expected haploid genome size, due to the assembly of both phases of certain chromosomes or
@@ -462,8 +462,7 @@ Each haplotig was aligned to the corresponding primary contig with [nucmer](http
 filtered with delta-filter and divergence was estimated with show-choords. (Data credits to John Williams, Tim Smith, 
 Paolo Ajmone-Marsan, David Hume, Erich Jarvis, John Henning, Dave Hendrix, Carlos Machado, and Iago Hale). 
 
-
-<img width="600px" src="img/unzippedHapDiv.png" alt="Haplotype diversity" />
+<h1 align="center"><img width="600px" src="img/unzippedHapDiv.png" alt="Haplotype diversity" /></h1>
 
 
 #### Why does FALCON have trouble assembling my amplicon data?
@@ -490,7 +489,7 @@ in the pre-assembly stats file.
 
 In the next round of HGAP, the preads, are aligned to each other and assembled into genomic contigs.
 
-<img width="600px" src="img/HGAP.png" alt="HGAP" />
+<h1 align="center"><img width="600px" src="img/HGAP.png" alt="HGAP" /></h1>
 
 For more complex genomes assembled with FALCON, “bubbles” in the contig-assembly graph that result 
 from structural variation between haplotypes may be resolved as associate and primary contigs. 
@@ -500,7 +499,7 @@ not extend between haplotigs. Thus, in part C) of the figure below, haplotig_1 a
 originate from different parental haplotypes. Additional information is needed to phase the haplotype 
 blocks with each other.
 
-<img width="600px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" />
+<h1 align="center"><img width="600px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" /></h1>
 
 Associate contig IDs contain the name of their primary contig but the precise location of alignment must 
 be determined with third party tools such as NUCmer. For example, in a FALCON assembly, 000123F-010-01 
@@ -511,7 +510,7 @@ Below are examples of alignments between associate and primary contigs from FALC
 primary contigs from FALCON-Unzip. Alignments were built with NUCmer and visualized with Assemblytics. 
 Precise coordinates may be obtained with the show-coords utilty from MUMmer.
 
-<img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" />
+<h1 align="center"><img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" /></h1>
 
 
 ## Acknowledgements
