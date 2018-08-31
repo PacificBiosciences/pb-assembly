@@ -81,6 +81,11 @@ fc_unzip fc_unzip.cfg
 
 Both FALCON and FALCON_unzip take a config file as their only input parameter.
 
+Here is a sample [fc_run.cfg](cfgs/fc_run_200kb.cfg) that was designed to work with the 200kb test case found
+below.
+
+Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb Human assembly.
+
 ### FALCON Configuration
 
 The FALCON pipeline is complex and has a multitude of configuration options. Many of the tools that comprise 
@@ -88,16 +93,10 @@ the FALCON Assembly pipeline were written by Gene Meyers and are extensively doc
 [dazzlerblog](http://dazzlerblog.wordpress.com). The FALCON denovo assembly pipeline consists of 3 basic stages,
 raw read overlapping and consensus calling, also known as **pre-assembly**, pre-assembled read overlapping
 or **pread overlapping**, and finally the assembly itself.
-
-Here is a sample [fc_run.cfg](cfgs/fc_run_200kb.cfg) that was designed to work with the 200kb test case found
-below
-
-Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb Human assembly.
  
-Below is a breakdown of the configuration options available to FALCON
+Below is a breakdown of the configuration options available to FALCON:
 
 #### Input
-
 
 ```ini
 [General]
@@ -116,11 +115,11 @@ recommended by Gene Meyer's. If you wish to modify your
 flag `pa_DBdust_option`.
 
 Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag.
-Recognized values are described below
+Recognized values are described below.
 
 |Value | Setting          
 |:-----|----------------
-|pass  |The no-op filter - passes every FASTA record to stdout.                                                                           |
+|pass  |The no-op filter - passes every FASTA record to the database.                                                                           |
 |median|Applies the median-length ZMW filter by running two passes over the data. Only one subread per ZMW is output, based on median-length selection.
 |streamed-median|     Applies the median-length ZMW filter by running a single-pass over the data. The input subreads should be groupped by ZMW.
 |internal-median|     Applies the median-length ZMW filter only on internal subreads (ZMWs with >= 3 subreads) by running two passes over the data. For ZMWs with < 3 subreads, the maximum-length one is selected.
@@ -180,7 +179,7 @@ manually set that limit. It's important to note that whatever value `length_cuto
 carries through to the unzipping algorithm, and any reads smaller than that cutoff will not be used for phasing. If
 you're just assembling, there is probably no harm in setting `length_cutoff` high. If you are unzipping however,
 then you will be artificially limiting your phasing dataset and it's probably in your interest to have a 
-lower `length_cutoff`
+lower `length_cutoff`.
  
 Overlap options for `daligner` are set with the `pa_HPCdaligner_option` and `pa_daligner_option` flags. Previous 
 versions of FALCON had a single parameter, however currently this was broken into two flags, one that affects requested 
@@ -207,10 +206,10 @@ ovlp_daligner_option=-e.96 -s1000 -h60 -t32
 ovlp_HPCdaligner_option=-v -M24 -l500
 ```
 
-The second phase of overlapping of corrected reads occurs in a similar fashion to the overlapping performed in the
-pre-assembly, however no repeat masking is performed as the repeats have already been masked, no consensus is
-called and overlaps are simply identified to be fed into the final assembly. The parameter options work the same 
-was as described above in the Pre-assembly section.
+The second phase of corrected read overlapping occurs in a similar fashion to the overlapping performed in the
+pre-assembly, however no repeat masking is performed as the repeats have already been masked and no consensus is
+called. Overlaps are identified and fed into the final assembly. The parameter options work the same 
+way as described above in the Pre-assembly section.
 
 #### Final Assembly
 
@@ -220,7 +219,7 @@ fc_ovlp_to_graph_option=
 length_cutoff_pr=1000
 ```
 
-The parameter `overlap_filter_setting` allows one to set criteria for filtering corrected read overlaps. 
+The option `overlap_filter_setting` allows one to set criteria for filtering corrected read overlaps. 
 `--max-diff` filters overlaps that have a coverage difference between the 5' and 3' ends larger than specified. 
 `--max-cov` filters highly represented overlaps typically caused by contaminants or repeats and `--min-cov` allows
 you to specify a minimum overlap coverage. Setting `--min-cov` too low will allow more overlaps to be detected
@@ -247,7 +246,7 @@ stage, `0-rawreads`, `1-preads_ovl` or `2-asm-falcon` respectively. The default 
 The flag `skip_checks` disables `.las` file checks with `LAcheck` which has been known to cause errors on certain
 systems in the past.
 
-The parameter `LA4Falcon_preload` passes the `-P` parameter to `LA4Falcon` which causes all the reads to be loaded
+The option `LA4Falcon_preload` passes the `-P` parameter to `LA4Falcon` which causes all the reads to be loaded
 into memory. On slow filesystems this can make a huge difference due to the random-access; but it will
 dramatically increase the memory requirement for the consensus stage.
 
@@ -282,7 +281,6 @@ If running on a cluster, you need to configure the `submit` string to work with 
 string in the sample above is a tested and working SGE submit string. If you are running in `local` mode on a 
 single machine, the submit string should be something like  `submit=bash -C ${CMD} >| ${STDOUT_FILE} 2>| ${STDERR_FILE}`.
 
-
 Next, you need to tell FALCON how to deal with pipeline flow control by setting your process watcher `pwatcher_type`. 
 There two possible values you can set, either `blocking` or `fs_based`. `fs_based` is the default and relies on
 the pipeline polling the file system periodically to determine whether a `sentinel` file has appeared that would 
@@ -292,9 +290,7 @@ of the system call, rather than by file system polling.
 
 Next you will find your job distribution settings. You will find settings for your default job queue `JOB_QUEUE`, 
 memory allocated per job `MB`, number of processors per job `NPROC` as well as number of concurrently running 
-jobs `njobs`. You will also find the `submit` option which allows you to set up your job scheduler submission 
-string. The example above works with a typical SGE grid. 
-
+jobs `njobs`. 
 
 Each stage of the assembly pipeline can be given different default parameters with different `[job.step.*]` sections.
 There are 6 optional stages you can configure by using different 2-3 letter codes. `da` and `la` refer to 
@@ -324,7 +320,7 @@ Similar to FALCON, the parameter `input_fofn` simply refers to the input file of
 be redundant with your fc_run.cfg. Finally, if you wish to polish your unzipped genome, you will need to also 
 specify a list of your input bam files with `input_bam_fofn`.
 
-Here is a sample [fc_unzip.cfg](file://cfgs/fc_unzip.cfg) that will need to be tuned to your compute environment.
+Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to your compute environment.
 
 #### Job Distribution
 
