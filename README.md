@@ -1,6 +1,6 @@
 <h1 align="center">pb-assembly</h1>
 <p align="center">PacBio Assembly Tool Suite:
-    Subreads in ⇨ Assembly out
+    Reads in ⇨ Assembly out
 </p>
 
 ***
@@ -330,11 +330,153 @@ are the job specific settings specific to FALCON_unzip. Available sections are `
 
 ## Example test case
 
-TODO
+To test your installation above you can download and run this small 200kb test case. 
+
+```bash
+git clone https://github.com/cdunn2001/git-sym.git
+git clone https://github.com/pb-cdunn/FALCON-examples.git
+cd FALCON-examples
+../git-sym/git-sym update run/greg200k-sv2
+
+```
+
+Once you have the data, you can test the pipeline in local or distributed mode by editing the fc_run.cfg file found
+in the run directory.
+
+```bash
+cd run/greg200k-sv2
+fc_run fc_run.cfg
+fc_unzip.py fc_unzip.cfg
+```
+
+If everything was installed properly the test case will exit cleanly and you should find fasta's with a file 
+size greater than 0 in the `4-quiver/cns-output` directory.
+
 
 ## FAQ
 
-TODO
+#### Can I start from corrected reads?
+
+Yes. The option `input_type` can be set to either `raw` or `preads`. In the case of the latter,
+`fc_run.py` will assume the fasta files in `input_fofn` are all error-corrected reads and it
+will ignore any pre-assembly step and go directly into the final assembly overlapping step.
+
+
+#### What's the difference between a Primary and an Associated contig?
+
+*Primary contigs* can be thought of as the longest continuous stretches of contiguously
+assembled sequence, while *associate contigs* can be thought of mostly as structural
+variants that occur over the length of the primary contigs. Thus, each alternate primary 
+contig configuration (associated contig) can be "associated" with it's primary 
+based on it's ``XXXXXXF`` prefix.
+
+Some basic information about how the associated contigs are generated can be found
+in [this speakerdeck](https://speakerdeck.com/jchin/string-graph-assembly-for-diploid-genomes-with-long-reads)
+, [here](https://speakerdeck.com/jchin/learning-genome-structrues-from-de-novo-assembly-and-long-read-mapping)
+(pg.14-15) [and here](https://speakerdeck.com/jchin/learning-genome-structrues-from-de-novo-assembly-and-long-read-mapping).
+
+Conceptually, if a genome is haploid, then all contigs should be primary contigs. However, in 
+general there will usually still be some associated contigs generated. This is likely due to:
+
+1. Sequencing errors
+2. Segmental duplications.
+
+For the first case, Quiver should help by filtering out low quality contigs. Since there is more sequence in
+the set of primary contigs for blasr to anchor reads and there is no true unique region in the erroneous
+associated contigs, the raw read coverage on them should be low. We can thus filter low quality
+*associated contig* consensus as there won't be much raw read data to support them.
+
+For the second case, one could potentially partition the reads into different haplotype groups and 
+construct an assembly graph for each haplotype and generate contigs accordingly.
+
+If a genome is a diploid, then most of the associated contigs will be locally alternative alleles.
+Typically, when there are big structural variations between homologous chromosomes, there will be alternative
+paths in the assembly graph and the alternative paths correspond to the associated contigs. In such case,
+the primary contigs are “fused contigs” from both haplotypes.
+
+FALCON_unzip is currently being developed to resolve the haplotypes so :term:`haplotigs <haplotig>` can
+be generated. Two videos illustrating the concept - ([Video 1](https://youtu.be/yC1ujdLUT7Q) ,
+[Video 2](https://youtu.be/vwSyD31eahI))
+
+A [slide](https://twitter.com/infoecho/status/604070162656985088) illustrating the method on a synthetic genome.
+
+#### What are the differences between a_ctg.fasta and a_ctg_base.fasta
+
+The file `a_ctg_base.fasta` contains the sequences in the primary contigs fasta that correspond to the associated
+contigs inside `a_ctg.fasta`. Namely, each sequence of a_ctg_base.fasta is a contiguous sub-sequence of a primary
+contig. For each sequence inside `a_ctg_base.fasta`, there are one or more associated contigs in `a_ctg.fasta`.
+
+#### Why don't I have two perfectly phased haplotypes after FALCON_unzip?
+
+
+It's useful to first understand that not all genomes are alike. Haploid genomes are the holy grail of genome assembly
+as there is only one haplotype phase present and assembly is trivial if you have reads long enough to span repeats.
+Diploid and (allo/auto)polyploid genomes become difficult as there are two or more haplotype phases present. This fact,
+coupled with widely varying levels of heterozygosity and structural variation lead to complications during the assembly
+process. To understand your FALCON output, it's useful to look at this supplemental figure from the 
+[FALCON_unzip paper](http://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4035.html):
+
+<img width="600px" src="img/heterozygosity.jpg" alt="Heterozygosity levels" />
+
+Consider the first line as a cartoon illustrating 3 ranges of heterozygosity (low/medium/high).
+In general, all genomes will have regions that fall into each of these three categories depending on organismal
+biology. During the first step of the FALCON assembly process, a diploid aware assembly graph is generated.
+At this point, in medium heterozygosity regions structural variation information is captured as bubbles or
+alternative pathways in the assembly graph whereas at high levels of heterozygosity the haplotype phases assemble into
+distinct primary assembly graphs.
+
+The *FALCON_unzip* add-on module to the FALCON pipeline is an attempt to leverage the heterozygous SNP information to
+phase the medium level heterozygosity regions of the genome. Low heterozygosity regions have insufficient SNP
+density for phasing, while high heterozygosity regions will likely have already been assembled as distinct haplotypes
+in the primary contigs.
+
+FALCON_unzip yields two fasta files. One containing primary contigs, and one containing haplotigs. The primary contigs
+fasta file is the main output that most people consider first and should consist of the majority of your genome. Primary
+contigs are considered *partially-phased*. What this means is that even after the unzipping process, certain regions
+with insufficient SNP density are unable to be phased and are thus represented as *collapsed haplotypes*. The presence
+of these regions of low heterozygosity makes it impossible to maintain phase across the entire primary contig. Thus
+primary contigs may contain phase-switches between unzipped regions. The haplotigs file will consist of the unzippapble
+or phaseable regions of the genome and are considered fully phased. This means there should be no phase switching within
+a haplotig and each haplotig should represent only one phase. See this figure for reference:
+
+<img width="600px" src="img/phaseswitch.png" alt="Phase switch" />
+
+It's also important to note that in high heterozygosity situations, we often see the primary contig fasta file
+approaching 1.5X+ the expected haploid genome size, due to the assembly of both phases of certain chromosomes or
+chromosomal regions in the primary assembly.
+
+Also, one needs to consider that FALCON_unzip was designed to phase the plant and fungal genomes in the 2016 Nature Methods
+paper above, but many people have successfully used it to help phase their genome of interest. But as always with
+free software on the internet, your mileage may vary.
+
+#### How much haplotype divergence can FALCON-Unzip handle?
+
+The magnitude of haplotype divergence determines the structure of the resulting FALCON-Unzip assembly. Genomic 
+regions with low heterozygisty will be assembled as collapsed haplotype on a single primary contig. Haplotypes 
+up to ~5% diverged will be Unzipped, while highly divergent haplotypes will be assembled on different primary 
+contigs. In the latter case, it is up to the user to identify these contigs as homologous using gene annotation 
+or sequence alignment.
+
+For a variety of FALCON-Unzip assemblies, here is the distribution of haplotype divergence for unzipped regions. 
+Each haplotig was aligned to the corresponding primary contig with [nucmer](https://github.com/mummer4/mummer), 
+filtered with delta-filter and divergence was estimated with show-choords. (Data credits to John Williams, Tim Smith, 
+Paolo Ajmone-Marsan, David Hume, Erich Jarvis, John Henning, Dave Hendrix, Carlos Machado, and Iago Hale). 
+
+
+<img width="600px" src="img/unzippedHapDiv.png" alt="Haplotype diversity" />
+
+
+#### Why does FALCON have trouble assembling my amplicon data?
+
+FALCON was designed for whole genome shot gun assembly rather than amplicon assembly. In whole genome shotgun
+assembly we suppress repetitive high copy regions to assemble less repetitive regions first.
+When you assemble PCR product of a short region in a genome, FALCON sees the whole thing as a high copy repeat
+and filters alot of the data out.
+
+You can try to down sample your data and make the daligner block size even smaller ( reduce -s50 in
+pa_DBsplit_option and ovlp_concurrent_jobs ) and increase the overlap filter thresholds (--max_diff 100
+--max_cov 100 in overlap_filtering_setting) to try to make it work, however it's not really within the scope of
+the FALCON algorithm.
 
 
 ## Detailed Description
