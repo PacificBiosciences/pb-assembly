@@ -107,7 +107,7 @@ pa_fasta_filter_option=pass
 ```
 
 Your list of paths to the input fasta files is specified in your `input_fofn` and your `input_type` can be
-either `raw` or `pread`. If specifying `pread`, the pipeline will skip the entire `0-rawreads` pre-assembly phase.
+either `raw` or `preads`. If specifying `preads`, the pipeline will skip the entire `0-rawreads` pre-assembly phase.
 
 By default, dusting is turned on and is run after generating the raw read database with default options as 
 recommended by Gene Meyer's. If you wish to modify your 
@@ -452,7 +452,7 @@ free software on the internet, your mileage may vary.
 #### How much haplotype divergence can FALCON-Unzip handle?
 
 The magnitude of haplotype divergence determines the structure of the resulting FALCON-Unzip assembly. Genomic 
-regions with low heterozygisty will be assembled as collapsed haplotype on a single primary contig. Haplotypes 
+regions with low heterozygosity will be assembled as collapsed haplotype on a single primary contig. Haplotypes 
 up to ~5% diverged will be Unzipped, while highly divergent haplotypes will be assembled on different primary 
 contigs. In the latter case, it is up to the user to identify these contigs as homologous using gene annotation 
 or sequence alignment.
