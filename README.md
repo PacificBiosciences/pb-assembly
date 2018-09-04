@@ -7,7 +7,7 @@
 
 # Availability
 
-The latest pre-release, unstable, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
+The latest pre-release, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
 
 ```bash
 conda install pb-assembly
@@ -22,7 +22,7 @@ source activate denovo_asm
 conda install pb-assembly
 ```
     
-If you are looking for a GUI based long read denovo genome assembler, you are urged to learn about 
+If you are looking for a GUI based long read *de novo* genome assembler, you are urged to learn about 
 [HGAP4](https://www.pacb.com/videos/tutorial-hgap4-de-novo-assembly-application/)
     
 These binaries are not ISO compliant.
@@ -32,18 +32,17 @@ Not for use in diagnostics procedures.
 No support for source builds.
 No support via mail to developers.
 Please *do not* contact a PacBio Field Applications Scientist or PacBio Customer Service for assistance.
-Please file GitHub issues for problems and questions!
+Please file GitHub issues for problems and questions.
 
 **This is an early beta!** Expect extreme changes and different output between
 versions until release of the first stable release.
-Furthermore, the command-line options are not stable yet,
-and can change at any point, do not rely on it yet.
+Furthermore, new parameters may be added or changed at any time so please proceed with caution.
 
 # Scope
 
 _pb-assembly_ is the bioconda recipe encompassing all code and dependencies necessary to
-run the FALCON assembly pipeline and subsequently attempt to phase your genome with FALCON_unzip
-and finally polish with arrow.
+run the FALCON assembly pipeline, subsequent extended phasing of a genome with FALCON_Unzip
+and polishing with Arrow.
 
 Installed package recipes include:
 
@@ -54,15 +53,16 @@ Installed package recipes include:
     
 # Overview
 
-FALCON and FALCON-Unzip are de novo genome assemblers for PacBio long reads, also known as 
-single-molecule real-time (SMRT) sequences. FALCON is a diploid-aware assembler which follows 
+FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
+Single-Molecule Real-Time (SMRT) sequences. FALCON is a diploid-aware assembler which follows 
 the hierarchical genome assembly process (HGAP) and is optimized for large genome assembly (e.g. 
-non-microbial). FALCON produces a set of primary contigs (a-contigs), which represent divergent 
-allelic variants. Each a-contig is associated with a homologous genomic region on an p-contig.
+non-microbial). FALCON produces a set of primary contigs (p-contigs) as the primary assembly and a 
+set of alternate contigs (a-contigs) which represent divergent allelic variants. Each a-contig is 
+associated with a homologous genomic region on an p-contig.
 
 FALCON-Unzip is a true diploid assembler. It takes the contigs from FALCON and phases the reads 
 based on heterozygous SNPs identified in the initial assembly. It then produces a set of partially
-phased primary contigs and fully phased haplotigs which represent divergent haplotyes.
+phased primary contigs and fully phased haplotigs which represent divergent haplotypes.
 
 # Usage
 
@@ -74,25 +74,25 @@ fc_run fc_run.cfg
 
 ## Unzip and polish
 ```bash   
-fc_unzip fc_unzip.cfg
+fc_unzip.py fc_unzip.cfg
 ```
 
 ## Configuration
 
-Both FALCON and FALCON_unzip take a config file as their only input parameter.
+Both FALCON and FALCON_Unzip take a config file as their only input parameter.
 
 Here is a sample [fc_run.cfg](cfgs/fc_run_200kb.cfg) that was designed to work with the 200kb test case found
 below.
 
-Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb Human assembly.
+Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb human genome assembly.
 
 ### FALCON Configuration
 
 The FALCON pipeline is complex and has a multitude of configuration options. Many of the tools that comprise 
 the FALCON Assembly pipeline were written by Gene Meyers and are extensively documented at his 
-[dazzlerblog](http://dazzlerblog.wordpress.com). The FALCON denovo assembly pipeline consists of 3 basic stages,
-raw read overlapping and consensus calling, also known as **pre-assembly**, pre-assembled read overlapping
-or **pread overlapping**, and finally the assembly itself.
+[dazzlerblog](http://dazzlerblog.wordpress.com). The FALCON *de novo* assembly pipeline consists of 3 basic stages:
+1) raw read overlapping and consensus calling, also known as **pre-assembly**, 2) pre-assembled read overlapping
+or **pread overlapping**, and finally 3) the assembly itself.
  
 Below is a breakdown of the configuration options available to FALCON:
 
@@ -176,13 +176,14 @@ pairs, the desired `seed_coverage` as well as set `length_cutoff=-1` to force th
 if you don't know your genome size, are unsure of the `seed_coverage` you would like to use or if you would rather 
 just leverage all reads above a specific length, you can use the the `length_cutoff` flag to
 manually set that limit. It's important to note that whatever value `length_cutoff` gets set to is a limit that
-carries through to the unzipping algorithm, and any reads smaller than that cutoff will not be used for phasing. If
-you're just assembling, there is probably no harm in setting `length_cutoff` high. If you are unzipping however,
-then you will be artificially limiting your phasing dataset and it's probably in your interest to have a 
+carries through to the unzipping algorithm, and any reads smaller than that cutoff will not be used for phasing.
+For assembly alone, there is likely no harm in setting a high `length_cutoff`, unless you are expecting a certain
+feature like micro chromosomes or short circular plasmids. Howevere, if you are planning to unzip, then you will be 
+artificially limiting your phasing dataset and it's probably in your interest to have a 
 lower `length_cutoff`.
  
 Overlap options for `daligner` are set with the `pa_HPCdaligner_option` and `pa_daligner_option` flags. Previous 
-versions of FALCON had a single parameter, however currently this was broken into two flags, one that affects requested 
+versions of FALCON had a single parameter. This is now split into two flags, one that affects requested 
 resources `pa_HPCdaligner_option` and one that affects the overlap search `pa_daligner_option`.
 For `pa_HPCdaligner_option`, the `-v` parameter is passed to the `LAsort` and `LAmerge` programs while `-B` and `-M` 
 parameters are passed to the `daligner` sub-commands. To understand the theory and how to configure `daligner` see 
@@ -190,13 +191,13 @@ parameters are passed to the `daligner` sub-commands. To understand the theory a
 and this [command reference guide](https://dazzlerblog.wordpress.com/command-guides/daligner-command-reference-guide/) 
  
 You can configure basic pre-assembly consensus calling options with the `falcon_sense_option` flag. The `--output-multi`
-flag is necessary for generating proper fasta headers so should not be removed unless you know what you are doing. The
-parameters `--min-idt`, `--min-cov` and `--max-n-read` set the minimum alignment identity, minimum coverage necessary 
-and max number of reads, respectively, for calling consensus with the `arrow` consensus algorthim.
+flag is necessary for generating proper fasta headers and should not be removed unless your specific use case requires 
+it. The parameters `--min-idt`, `--min-cov` and `--max-n-read` set the minimum alignment identity, minimum 
+coverage necessary and max number of reads, respectively, for calling consensus with the `arrow` consensus algorthim.
 
 By default, `-fo` are the parameters passed to `LA4Falcon`. The option `falcon_sense_greedy` changes this
- parameter set to `-fog` which essentially attempts to maintain relative information between reads that have been
- broken.
+parameter set to `-fog` which essentially attempts to maintain relative information between reads that have 
+been broken.
 
 
 #### Pread overlapping
@@ -219,14 +220,14 @@ fc_ovlp_to_graph_option=
 length_cutoff_pr=1000
 ```
 
-The option `overlap_filter_setting` allows one to set criteria for filtering corrected read overlaps. 
+The option `overlap_filter_setting` allows setting criteria for filtering corrected read overlaps. 
 `--max-diff` filters overlaps that have a coverage difference between the 5' and 3' ends larger than specified. 
 `--max-cov` filters highly represented overlaps typically caused by contaminants or repeats and `--min-cov` allows
-you to specify a minimum overlap coverage. Setting `--min-cov` too low will allow more overlaps to be detected
+specification of a minimum overlap coverage. Setting `--min-cov` too low will allow more overlaps to be detected
 at the expense of additional chimeric / mis-assemblies.
     
-`length_cutoff_pr` is the minimum length of pre-assembled *preads* used for the final assembly. Typically you
-want to set this value to allow for approximately 15-30X coverage of corrected reads in the final assembly.
+`length_cutoff_pr` is the minimum length of pre-assembled *preads* used for the final assembly. Typically, this value 
+is set to allow for approximately 15 to 30-fold coverage of corrected reads in the final assembly.
 
 #### Miscellaneous configuration options
 
@@ -239,16 +240,16 @@ skip_checks=False
 LA4Falcon_preload=false
 ```
 
-FALCON can be configured to stop after any of it's three stages with the `target` flag set to either
-`overlapping`, `pre-assembly` or `assembly`. Each option will stop the pipeline at the end of it's corresponding
+FALCON can be configured to stop after any of its three stages with the `target` flag set to either
+`overlapping`, `pre-assembly` or `assembly`. Each option will stop the pipeline at the end of its corresponding
 stage, `0-rawreads`, `1-preads_ovl` or `2-asm-falcon` respectively. The default is full `assembly` pipeline.
 
 The flag `skip_checks` disables `.las` file checks with `LAcheck` which has been known to cause errors on certain
 systems in the past.
 
 The option `LA4Falcon_preload` passes the `-P` parameter to `LA4Falcon` which causes all the reads to be loaded
-into memory. On slow filesystems this can make a huge difference due to the random-access; but it will
-dramatically increase the memory requirement for the consensus stage.
+into memory. On slow filesystems this can speed things up significantly; but it will dramatically increase the 
+memory requirement for the consensus stage.
 
 #### Job Distribution
 
@@ -310,7 +311,7 @@ input_fofn=input.fofn
 input_bam_fofn=input_bam.fofn
 ```
 
-Relative to setting FALCON parameters, FALCON_unzip is a breeze as the majority of the options have to do
+FALCON_Unzip configuration is quite simple as the majority of the options have to do
 exclusively with job distribution. The first and only setting in the [General] section is for `max_n_open_files`.
 During the read tracking stage the pipeline can be writing to many `.sam` files at the same time. This can cause
 problems with certain networked filesystems, so the default is to set `max_n_open_files=300`. Feel free to raise
@@ -325,7 +326,7 @@ Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to
 #### Job Distribution
 
 Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only difference
-are the job specific settings specific to FALCON_unzip. Available sections are `[job.step.unzip_track_reads]`, 
+are the job specific settings specific to FALCON_Unzip. Available sections are `[job.step.unzip_track_reads]`, 
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
 
 ## Example test case
@@ -349,7 +350,7 @@ fc_run fc_run.cfg
 fc_unzip.py fc_unzip.cfg
 ```
 
-If everything was installed properly the test case will exit cleanly and you should find fasta's with a file 
+If everything was installed properly the test case will exit cleanly and you should find fasta files with a  
 size greater than 0 in the `4-quiver/cns-output` directory.
 
 
@@ -364,37 +365,36 @@ will ignore any pre-assembly step and go directly into the final assembly overla
 
 #### What's the difference between a Primary and an Associated contig?
 
-*Primary contigs* can be thought of as the longest continuous stretches of contiguously
-assembled sequence, while *associate contigs* can be thought of mostly as structural
-variants that occur over the length of the primary contigs. Thus, each alternate primary 
-contig configuration (associated contig) can be "associated" with it's primary 
-based on it's ``XXXXXXF`` prefix.
+*Primary contigs* can be thought of as the longest continuous stretches of assembled sequence, while 
+*associate contigs* can be thought of mostly as structural variants that occur over the length of the 
+primary contigs. Thus, each alternate primary contig configuration (associated contig) can be 
+"associated" with its primary based on its ``XXXXXXF`` prefix.
 
 Some basic information about how the associated contigs are generated can be found
 in [this speakerdeck](https://speakerdeck.com/jchin/string-graph-assembly-for-diploid-genomes-with-long-reads), 
 and also [here](https://speakerdeck.com/jchin/learning-genome-structrues-from-de-novo-assembly-and-long-read-mapping)
 (pg.14-15).
 
-Conceptually, if a genome is haploid, then all contigs should be primary contigs. However, in 
-general there will usually still be some associated contigs generated. This is likely due to:
+Conceptually, if a genome is haploid, then all contigs should be primary contigs. However, often there will 
+usually still be some associated contigs generated. This is likely due to:
 
 1. Sequencing errors
-2. Segmental duplications.
+2. Segmental duplications
 
 For the first case, Quiver should help by filtering out low quality contigs. Since there is more sequence in
 the set of primary contigs for blasr to anchor reads and there is no true unique region in the erroneous
-associated contigs, the raw read coverage on them should be low. We can thus filter low quality
+associated contigs, the raw read coverage of them should be low. We can thus filter low quality
 *associated contig* consensus as there won't be much raw read data to support them.
 
 For the second case, one could potentially partition the reads into different haplotype groups and 
 construct an assembly graph for each haplotype and generate contigs accordingly.
 
-If a genome is a diploid, then most of the associated contigs will be locally alternative alleles.
+If a genome is a diploid, most of the associated contigs will be locally alternative alleles.
 Typically, when there are big structural variations between homologous chromosomes, there will be alternative
 paths in the assembly graph and the alternative paths correspond to the associated contigs. In such case,
 the primary contigs are “fused contigs” from both haplotypes.
 
-FALCON_unzip is currently being developed to resolve the haplotypes so *haplotigs* can
+FALCON_Unzip is currently being developed to resolve the haplotypes so *haplotigs* can
 be generated. Two videos illustrating the concept - ([Video 1](https://youtu.be/yC1ujdLUT7Q) ,
 [Video 2](https://youtu.be/vwSyD31eahI))
 
@@ -406,15 +406,16 @@ The file `a_ctg_base.fasta` contains the sequences in the primary contigs fasta 
 contigs inside `a_ctg.fasta`. Namely, each sequence of a_ctg_base.fasta is a contiguous sub-sequence of a primary
 contig. For each sequence inside `a_ctg_base.fasta`, there are one or more associated contigs in `a_ctg.fasta`.
 
-#### Why don't I have two perfectly phased haplotypes after FALCON_unzip?
+#### Why don't I have two perfectly phased haplotypes after FALCON_Unzip?
 
 
-It's useful to first understand that not all genomes are alike. Haploid genomes are the holy grail of genome assembly
-as there is only one haplotype phase present and assembly is trivial if you have reads long enough to span repeats.
-Diploid and (allo/auto)polyploid genomes become difficult as there are two or more haplotype phases present. This fact,
-coupled with widely varying levels of heterozygosity and structural variation lead to complications during the assembly
-process. To understand your FALCON output, it's useful to look at this supplemental figure from the 
-[FALCON_unzip paper](http://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4035.html):
+It's useful to first understand that not all genomes are alike. Haploid genomes are the ideal use case of genome 
+assembly since there is only one haplotype phase present and assembly is trivial if you have reads long enough to 
+span repeats. Diploid and (allo/auto)polyploid genomes become difficult as there are two or more haplotype 
+phases present. This fact, coupled with widely varying levels of heterozygosity and structural variation lead 
+to complications during the assembly process. To understand your FALCON output, it's useful to look at this 
+supplemental figure from the 
+[FALCON_Unzip paper](http://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4035.html):
 
 <h1 align="center"><img width="600px" src="img/heterozygosity.jpg" alt="Heterozygosity levels" /></h1>
 
@@ -425,19 +426,20 @@ At this point, in medium heterozygosity regions structural variation information
 alternative pathways in the assembly graph whereas at high levels of heterozygosity the haplotype phases assemble into
 distinct primary assembly graphs.
 
-The *FALCON_unzip* add-on module to the FALCON pipeline is an attempt to leverage the heterozygous SNP information to
+The *FALCON_Unzip* add-on module to the FALCON pipeline is an attempt to leverage the heterozygous SNP information to
 phase the medium level heterozygosity regions of the genome. Low heterozygosity regions have insufficient SNP
 density for phasing, while high heterozygosity regions will likely have already been assembled as distinct haplotypes
 in the primary contigs.
 
-FALCON_unzip yields two fasta files. One containing primary contigs, and one containing haplotigs. The primary contigs
+FALCON_Unzip yields two fasta files. One containing primary contigs, and one containing haplotigs. The primary contigs
 fasta file is the main output that most people consider first and should consist of the majority of your genome. Primary
 contigs are considered *partially-phased*. What this means is that even after the unzipping process, certain regions
 with insufficient SNP density are unable to be phased and are thus represented as *collapsed haplotypes*. The presence
-of these regions of low heterozygosity makes it impossible to maintain phase across the entire primary contig. Thus
-primary contigs may contain phase-switches between unzipped regions. The haplotigs file will consist of the unzippapble
-or phaseable regions of the genome and are considered fully phased. This means there should be no phase switching within
-a haplotig and each haplotig should represent only one phase. See this figure for reference:
+of these regions of low heterozygosity makes it impossible to maintain phase across the entire primary contig. 
+Therefore, primary contigs may contain phase-switches between unzipped regions. The haplotigs file will consist 
+of regions of the genome that are able to be unzipped or phased and are considered *fully phased*. This means there should 
+be no phase switching within a haplotig and each haplotig should represent only one phase. See this figure for 
+reference:
 
 <h1 align="center"><img width="600px" src="img/phaseswitch.png" alt="Phase switch" /></h1>
 
@@ -445,21 +447,21 @@ It's also important to note that in high heterozygosity situations, we often see
 approaching 1.5X+ the expected haploid genome size, due to the assembly of both phases of certain chromosomes or
 chromosomal regions in the primary assembly.
 
-Also, one needs to consider that FALCON_unzip was designed to phase the plant and fungal genomes in the 2016 Nature Methods
-paper above, but many people have successfully used it to help phase their genome of interest. But as always with
-free software on the internet, your mileage may vary.
+Also, one needs to consider that FALCON_Unzip was designed to phase the plant and fungal genomes in the 2016 Nature 
+Methods paper above. Many people have successfully used it to help phase their genome of interest, but as always with
+free software on the internet, your results may vary.
 
 #### How much haplotype divergence can FALCON-Unzip handle?
 
 The magnitude of haplotype divergence determines the structure of the resulting FALCON-Unzip assembly. Genomic 
-regions with low heterozygosity will be assembled as collapsed haplotype on a single primary contig. Haplotypes 
-up to ~5% diverged will be Unzipped, while highly divergent haplotypes will be assembled on different primary 
+regions with low heterozygosity will be assembled as a collapsed haplotype on a single primary contig. Haplotypes 
+up to ~5% diverged will be unzipped, while highly divergent haplotypes will be assembled on different primary 
 contigs. In the latter case, it is up to the user to identify these contigs as homologous using gene annotation 
 or sequence alignment.
 
 For a variety of FALCON-Unzip assemblies, here is the distribution of haplotype divergence for unzipped regions. 
 Each haplotig was aligned to the corresponding primary contig with [nucmer](https://github.com/mummer4/mummer), 
-filtered with delta-filter and divergence was estimated with show-choords. (Data credits to John Williams, Tim Smith, 
+filtered with delta-filter and divergence was estimated with `show-coords`. (Data credits to John Williams, Tim Smith, 
 Paolo Ajmone-Marsan, David Hume, Erich Jarvis, John Henning, Dave Hendrix, Carlos Machado, and Iago Hale). 
 
 <h1 align="center"><img width="600px" src="img/unzippedHapDiv.png" alt="Haplotype diversity" /></h1>
@@ -467,27 +469,27 @@ Paolo Ajmone-Marsan, David Hume, Erich Jarvis, John Henning, Dave Hendrix, Carlo
 
 #### Why does FALCON have trouble assembling my amplicon data?
 
-FALCON was designed for whole genome shot gun assembly rather than amplicon assembly. In whole genome shotgun
+FALCON was designed for whole genome shotgun assembly rather than amplicon assembly. In whole genome shotgun
 assembly we suppress repetitive high copy regions to assemble less repetitive regions first.
-When you assemble PCR product of a short region in a genome, FALCON sees the whole thing as a high copy repeat
-and filters alot of the data out.
+When you assemble the PCR product of a short region in a genome, FALCON sees the whole thing as a high copy repeat
+and filters out a significant portion of the data.
 
-You can try to down sample your data and make the daligner block size even smaller ( reduce -s50 in
-pa_DBsplit_option and ovlp_concurrent_jobs ) and increase the overlap filter thresholds (--max_diff 100
---max_cov 100 in overlap_filtering_setting) to try to make it work, however it's not really within the scope of
-the FALCON algorithm.
+You can try to downsample your data and make the `daligner` block size even smaller ( reduce `-s50` in
+`pa_DBsplit_option` ) and increase the overlap filter thresholds (`--max_diff 100`
+`--max_cov 100` in `overlap_filtering_setting`) to try to make it work. However, this use case is not really within 
+the scope of the FALCON algorithm.
 
 
 ## Detailed Description
 The hierarchical genome assembly process proceeds in two rounds. The first round of assembly involves
-the selection of seed reads, or the longest reads in the dataset (user-defined length_cutoff). All 
+the selection of seed reads or the longest reads in the dataset (user-defined length_cutoff). All 
 shorter reads are aligned to the seed reads, in order to generate consensus sequences with high accuracy. 
 We refer to these as pre-assembled reads but they can also be thought of as “error corrected” reads. 
 During the pre-assembly process, seed reads may be split or trimmed at regions of low read coverage 
 (user-defined min_cov for falcon_sense_option). The performance of the pre-assembly process is captured 
 in the pre-assembly stats file.
 
-In the next round of HGAP, the preads, are aligned to each other and assembled into genomic contigs.
+In the next round of HGAP, the preads are aligned to each other and assembled into genomic contigs.
 
 <h1 align="center"><img width="600px" src="img/HGAP.png" alt="HGAP" /></h1>
 
@@ -515,5 +517,6 @@ Precise coordinates may be obtained with the show-coords utilty from MUMmer.
 
 ## Acknowledgements
 Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic for their numerous improvements.
+
 ## Disclaimer
 THIS WEBSITE AND CONTENT AND ALL SITE-RELATED SERVICES, INCLUDING ANY DATA, ARE PROVIDED "AS IS," WITH ALL FAULTS, WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ANY WARRANTIES OF MERCHANTABILITY, SATISFACTORY QUALITY, NON-INFRINGEMENT OR FITNESS FOR A PARTICULAR PURPOSE. YOU ASSUME TOTAL RESPONSIBILITY AND RISK FOR YOUR USE OF THIS SITE, ALL SITE-RELATED SERVICES, AND ANY THIRD PARTY WEBSITES OR APPLICATIONS. NO ORAL OR WRITTEN INFORMATION OR ADVICE SHALL CREATE A WARRANTY OF ANY KIND. ANY REFERENCES TO SPECIFIC PRODUCTS OR SERVICES ON THE WEBSITES DO NOT CONSTITUTE OR IMPLY A RECOMMENDATION OR ENDORSEMENT BY PACIFIC BIOSCIENCES.
