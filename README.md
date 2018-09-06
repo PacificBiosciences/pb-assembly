@@ -4,7 +4,8 @@
 </p>
 
 ***
-[Availability](https://github.com/gconcepcion/pb-assembly#availability)
+1. [*Availability*](https://github.com/gconcepcion/pb-assembly#availability)
+2. [*Scope*](https://github.com/gconcepcion/pb-assembly#scope)
 
 
 # Availability
