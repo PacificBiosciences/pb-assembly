@@ -389,6 +389,38 @@ If everything was installed properly the test case will exit cleanly and you sho
 size greater than 0 in the `4-quiver/cns-output` directory.
 
 
+
+
+## New Features in PB Assembly
+
+### FALCON
+Repeat Masking
+Integration of Tandem repeat masking (done) and general repeat masking (in progress)
+
+New! GFA and Placement Files
+- GFA-1 and GFA-2 output for assembly graphs
+-placement files for associate contigs (contig.gfa2)
+
+Increased Accuracy of Associate Contigs
+-algorithm and alignment improvements (Edlib integration)
+
+Performance Improvements
+-general workflow and resource specification improvements
+-easier integration of future features with Pbsmrtpipe
+
+### FALCON-Unzip
+Improved Haplotig Extraction
+-algorithm and data structure improvements reduce haplotype switching and improve extraction
+-can now handle circular contigs!
+
+New! Placement Files
+-haplotig placement (PAF format) generated in 3-unzip stage
+
+Performance Improvements
+-use of minimap2 instead of BLASR for phasing in Unzip reduces time and memory requirements
+-unzipping and polishing now part of single workflow
+
+
 ## FAQ
 
 #### Can I start from corrected reads?
