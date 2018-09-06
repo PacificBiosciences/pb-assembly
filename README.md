@@ -150,7 +150,7 @@ fc_unzip.py fc_unzip.cfg
 
 # Configuration
 
-Both FALCON and FALCON_Unzip take a config file as their only input parameter.
+Both FALCON and FALCON-Unzip take a config file as their only input parameter.
 
 Here is a sample [fc_run.cfg](cfgs/fc_run_200kb.cfg) that was designed to work with the 200kb test case found
 below.
@@ -475,7 +475,7 @@ Typically, when there are big structural variations between homologous chromosom
 paths in the assembly graph and the alternative paths correspond to the associated contigs. In such case,
 the primary contigs are “fused contigs” from both haplotypes.
 
-FALCON_Unzip is currently being developed to resolve the haplotypes so *haplotigs* can
+FALCON-Unzip is currently being developed to resolve the haplotypes so *haplotigs* can
 be generated. Two videos illustrating the concept - ([Video 1](https://youtu.be/yC1ujdLUT7Q) ,
 [Video 2](https://youtu.be/vwSyD31eahI))
 
@@ -487,7 +487,7 @@ The file `a_ctg_base.fasta` contains the sequences in the primary contigs fasta 
 contigs inside `a_ctg.fasta`. Namely, each sequence of a_ctg_base.fasta is a contiguous sub-sequence of a primary
 contig. For each sequence inside `a_ctg_base.fasta`, there are one or more associated contigs in `a_ctg.fasta`.
 
-#### Why don't I have two perfectly phased haplotypes after FALCON_Unzip?
+#### Why don't I have two perfectly phased haplotypes after FALCON-Unzip?
 
 
 It's useful to first understand that not all genomes are alike. Haploid genomes are the ideal use case of genome 
@@ -496,7 +496,7 @@ span repeats. Diploid and (allo/auto)polyploid genomes become difficult as there
 phases present. This fact, coupled with widely varying levels of heterozygosity and structural variation lead 
 to complications during the assembly process. To understand your FALCON output, it's useful to look at this 
 supplemental figure from the 
-[FALCON_Unzip paper](http://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4035.html):
+[FALCON-Unzip paper](http://www.nature.com/nmeth/journal/vaop/ncurrent/full/nmeth.4035.html):
 
 <h1 align="center"><img width="600px" src="img/heterozygosity.jpg" alt="Heterozygosity levels" /></h1>
 
@@ -528,7 +528,7 @@ It's also important to note that in high heterozygosity situations, we often see
 approaching 1.5X+ the expected haploid genome size, due to the assembly of both phases of certain chromosomes or
 chromosomal regions in the primary assembly.
 
-Also, one needs to consider that FALCON_Unzip was designed to phase the plant and fungal genomes in the 2016 Nature 
+Also, one needs to consider that FALCON-Unzip was designed to phase the plant and fungal genomes in the 2016 Nature 
 Methods paper above. Many people have successfully used it to help phase their genome of interest, but as always with
 free software on the internet, your results may vary.
 
