@@ -51,7 +51,7 @@ Installed package recipes include:
     - genomicconsensus
     - etc (all other dependencies)
     
-# Overview
+# General Overview
 
 FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
 Single-Molecule Real-Time (SMRT) sequences. FALCON is a diploid-aware assembler which follows 
@@ -61,8 +61,36 @@ set of alternate contigs (a-contigs) which represent divergent allelic variants.
 associated with a homologous genomic region on an p-contig.
 
 FALCON-Unzip is a true diploid assembler. It takes the contigs from FALCON and phases the reads 
-based on heterozygous SNPs identified in the initial assembly. It then produces a set of partially
-phased primary contigs and fully phased haplotigs which represent divergent haplotypes.
+based on heterozygous SNPs identified in the initial assembly. It then produces a set of partially-phased primary contigs and fully-phased haplotigs which represent divergent haplotypes.
+
+## Detailed Description of Assembly
+The hierarchical genome assembly process proceeds in two rounds. The first round of assembly involves
+the selection of seed reads or the longest reads in the dataset (user-defined length_cutoff). All 
+shorter reads are aligned to the seed reads, in order to generate consensus sequences with high accuracy. 
+We refer to these as pre-assembled reads but they can also be thought of as “error corrected” reads. 
+During the pre-assembly process, seed reads may be split or trimmed at regions of low read coverage 
+(user-defined min_cov for falcon_sense_option). The performance of the pre-assembly process is captured 
+in the pre-assembly stats file.
+
+In the next round of HGAP, the preads are aligned to each other and assembled into genomic contigs.
+
+<h1 align="center"><img width="600px" src="img/HGAP.png" alt="HGAP" /></h1>
+
+For more complex genomes assembled with FALCON, “bubbles” in the contig-assembly graph that result 
+from structural variation between haplotypes may be resolved as associate and primary contigs. 
+The unzip process will extend haplotype phasing beyond “bubble” regions, increasing the amount of phased 
+contig sequence. It is important to note that while individual haplotype blocks are phased, phasing does 
+not extend between haplotigs. Thus, in part C) of the figure below, haplotig_1 and haplotig_2 may 
+originate from different parental haplotypes. Additional information is needed to phase the haplotype 
+blocks with each other.
+
+<h1 align="center"><img width="600px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" /></h1>
+
+Below are examples of alignments between associate and primary contigs from FALCON, and haplotigs and 
+primary contigs from FALCON-Unzip.
+
+<h1 align="center"><img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" /></h1>
+
 
 # Usage
 
@@ -486,40 +514,12 @@ You can try to downsample your data and make the `daligner` block size even smal
 `--max_cov 100` in `overlap_filtering_setting`) to try to make it work. However, this use case is not really within 
 the scope of the FALCON algorithm.
 
-
-## Detailed Description
-The hierarchical genome assembly process proceeds in two rounds. The first round of assembly involves
-the selection of seed reads or the longest reads in the dataset (user-defined length_cutoff). All 
-shorter reads are aligned to the seed reads, in order to generate consensus sequences with high accuracy. 
-We refer to these as pre-assembled reads but they can also be thought of as “error corrected” reads. 
-During the pre-assembly process, seed reads may be split or trimmed at regions of low read coverage 
-(user-defined min_cov for falcon_sense_option). The performance of the pre-assembly process is captured 
-in the pre-assembly stats file.
-
-In the next round of HGAP, the preads are aligned to each other and assembled into genomic contigs.
-
-<h1 align="center"><img width="600px" src="img/HGAP.png" alt="HGAP" /></h1>
-
-For more complex genomes assembled with FALCON, “bubbles” in the contig-assembly graph that result 
-from structural variation between haplotypes may be resolved as associate and primary contigs. 
-The unzip process will extend haplotype phasing beyond “bubble” regions, increasing the amount of phased 
-contig sequence. It is important to note that while individual haplotype blocks are phased, phasing does 
-not extend between haplotigs. Thus, in part C) of the figure below, haplotig_1 and haplotig_2 may 
-originate from different parental haplotypes. Additional information is needed to phase the haplotype 
-blocks with each other.
-
-<h1 align="center"><img width="600px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" /></h1>
-
+#### How do I know where alternate haplotypes align to the primary contig? 
 Associate contig IDs contain the name of their primary contig but the precise location of alignment must 
 be determined with third party tools such as NUCmer. For example, in a FALCON assembly, 000123F-010-01 
 is an associated contig to primary contig 000123F. In a FALCON-Unzip assembly, 000123F_001 is a haplotig 
-of primary contig 000123F.
+of primary contig 000123F. The alignment position can be found in a [PAF](https://github.com/lh3/miniasm/blob/master/PAF.md) file: `3-unzip/all_h_ctg.paf`.  The alignment coordinates after polishing is not yet produced but can be generated through alignments.
 
-Below are examples of alignments between associate and primary contigs from FALCON, and haplotigs and 
-primary contigs from FALCON-Unzip. Alignments were built with NUCmer and visualized with Assemblytics. 
-Precise coordinates may be obtained with the show-coords utilty from MUMmer.
-
-<h1 align="center"><img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" /></h1>
 
 
 ## Acknowledgements
