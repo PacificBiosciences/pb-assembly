@@ -176,10 +176,10 @@ pa_daligner_option=-e.8 -l2000 -k18 -h480  -w8 -s100
 falcon_sense_option=--output-multi --min-idt 0.70 --min-cov 2 --max-n-read 1800
 falcon_sense_greedy=False
 ```
-During pre-assembly, the PacBio subreads are aligned and error correction is performed. The longest subreads are chosen as `seed reads` and all shorter reads are aligned to them and consensus sequences are generated from the alignments. These consensus sequences are called `pre-assembled reads` oe `preads`.
+During pre-assembly, the PacBio subreads are aligned and error correction is performed. The longest subreads are chosen as `seed reads` and all shorter reads are aligned to them and consensus sequences are generated from the alignments. These consensus sequences are called `pre-assembled reads` or `preads` and generally have accuracy greater than 99% or QV20.
 
 If you wish to auto-calculate your seed read coverage, then it's necessary to enter your `genome_size` in base
-pairs, the desired `seed_coverage` as well as set `length_cutoff=-1` to force the auto-calculation. Alternatively, 
+pairs, the desired `seed_coverage` as well as set `length_cutoff=-1` to force the auto-calculation. We generally recommend `20-40x` seed coverage. Alternatively, 
 if you don't know your genome size, are unsure of the `seed_coverage` you would like to use or if you would rather 
 just leverage all reads above a specific length, you can use the the `length_cutoff` flag to
 manually set that limit. It's important to note that whatever value `length_cutoff` gets set to is a limit that
@@ -214,10 +214,10 @@ ovlp_daligner_option=-e.96 -s1000 -h60 -t32
 ovlp_HPCdaligner_option=-v -M24 -l500
 ```
 
-The second phase of corrected read overlapping occurs in a similar fashion to the overlapping performed in the
-pre-assembly, however no repeat masking is performed as the repeats have already been masked and no consensus is
+The second phase of error-corrected read overlapping occurs in a similar fashion to the overlapping performed in the
+pre-assembly, however no repeat masking is performed and no consensus is
 called. Overlaps are identified and fed into the final assembly. The parameter options work the same 
-way as described above in the Pre-assembly section.
+way as described above in the pre-assembly section.
 
 #### Final Assembly
 
@@ -318,14 +318,14 @@ input_fofn=input.fofn
 input_bam_fofn=input_bam.fofn
 ```
 
-FALCON_Unzip configuration is quite simple as the majority of the options have to do
+FALCON-Unzip configuration is quite simple as the majority of the options have to do
 exclusively with job distribution. The first and only setting in the [General] section is for `max_n_open_files`.
 During the read tracking stage the pipeline can be writing to many `.sam` files at the same time. This can cause
 problems with certain networked filesystems, so the default is to set `max_n_open_files=300`. Feel free to raise
 this number if file system latency is not an issue for you.
 
 Similar to FALCON, the parameter `input_fofn` simply refers to the input file of fasta names. This setting should
-be redundant with your fc_run.cfg. Finally, if you wish to polish your unzipped genome, you will need to also 
+be redundant with your `fc_run.cfg`. Finally, if you wish to polish your unzipped genome, you will need to also 
 specify a list of your input bam files with `input_bam_fofn`.
 
 Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to your compute environment.
@@ -333,7 +333,7 @@ Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to
 #### Job Distribution
 
 Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only difference
-are the job specific settings specific to FALCON_Unzip. Available sections are `[job.step.unzip_track_reads]`, 
+are the job specific settings specific to FALCON-Unzip. Available sections are `[job.step.unzip_track_reads]`, 
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
 
 ## Example test case
@@ -433,12 +433,12 @@ At this point, in medium heterozygosity regions structural variation information
 alternative pathways in the assembly graph whereas at high levels of heterozygosity the haplotype phases assemble into
 distinct primary assembly graphs.
 
-The *FALCON_Unzip* add-on module to the FALCON pipeline is an attempt to leverage the heterozygous SNP information to
+The *FALCON-Unzip* add-on module to the FALCON pipeline is an attempt to leverage the heterozygous SNP information to
 phase the medium level heterozygosity regions of the genome. Low heterozygosity regions have insufficient SNP
 density for phasing, while high heterozygosity regions will likely have already been assembled as distinct haplotypes
 in the primary contigs.
 
-FALCON_Unzip yields two fasta files. One containing primary contigs, and one containing haplotigs. The primary contigs
+FALCON-Unzip yields two fasta files. One containing primary contigs, and one containing haplotigs. The primary contigs
 fasta file is the main output that most people consider first and should consist of the majority of your genome. Primary
 contigs are considered *partially-phased*. What this means is that even after the unzipping process, certain regions
 with insufficient SNP density are unable to be phased and are thus represented as *collapsed haplotypes*. The presence
