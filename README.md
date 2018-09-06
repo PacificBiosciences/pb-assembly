@@ -553,8 +553,6 @@ Paolo Ajmone-Marsan, David Hume, Erich Jarvis, John Henning, Dave Hendrix, Carlo
 
 Preassembly performance is summarized in the file: `0-rawreads/report/pre_assembly_stats.json`. 
 
-.. code-block:: bash
-
         $ cat 0-rawreads/report/pre_assembly_stats.json
 
         "genome_length": 4652500,
@@ -565,7 +563,7 @@ Preassembly performance is summarized in the file: `0-rawreads/report/pre_assemb
         "preassembled_n50": 16120,
         "preassembled_p95": 22741,
         "preassembled_reads": 32646,
-        "preassembled_seed_fragmentation": 1.451,       # number split preads / seed reads
+        "preassembled_seed_fragmentation": 1.451,       # total preads / seed reads
         "preassembled_seed_truncation": 4453.782,       # ave bp lost per pread due to low cov
         "preassembled_yield": 0.758,                    # total pread bp / seed read bp
         "raw_bases": 964281429,
@@ -581,8 +579,8 @@ Preassembly performance is summarized in the file: `0-rawreads/report/pre_assemb
         "seed_p95": 28307,
         "seed_reads": 23059
 
-A note on these statistics: in the process of created preads, seeds reads with insufficient
-raw read coverage (usually due to base errors) will be split or truncated. The preassembled seed
+A note on these statistics: in the process of created preads, seeds read bases with insufficient
+raw read coverage (specific by `--min_cov` in `falcon_sense_option`) will cause the read to be split or truncated. The preassembled seed
 fragmentation, truncation, and yield stats summarize the quality of pread assembly.
 A good preassembled yield should be greater than 50%. Insufficient coverage or low quality data are common reasons for poor preassembled yield.
 
