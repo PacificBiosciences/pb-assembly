@@ -176,7 +176,7 @@ pa_daligner_option=-e.8 -l2000 -k18 -h480  -w8 -s100
 falcon_sense_option=--output-multi --min-idt 0.70 --min-cov 2 --max-n-read 1800
 falcon_sense_greedy=False
 ```
-During pre-assembly, the subreads are aligned and error correction is performed. The longest subreads are chosen as `seed reads` and all shorter reads are aligned to them and consensus sequences are generated from the alignments. These consensus sequences are called `pre-assembled reads` oe `preads`.
+During pre-assembly, the PacBio subreads are aligned and error correction is performed. The longest subreads are chosen as `seed reads` and all shorter reads are aligned to them and consensus sequences are generated from the alignments. These consensus sequences are called `pre-assembled reads` oe `preads`.
 
 If you wish to auto-calculate your seed read coverage, then it's necessary to enter your `genome_size` in base
 pairs, the desired `seed_coverage` as well as set `length_cutoff=-1` to force the auto-calculation. Alternatively, 
