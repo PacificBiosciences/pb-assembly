@@ -8,7 +8,13 @@
 + [**Scope**](https://github.com/gconcepcion/pb-assembly#scope)
 + [**General Overview**](https://github.com/gconcepcion/pb-assembly#general-overview)
 + [**Usage**](https://github.com/gconcepcion/pb-assembly#usage)
-
++ [**Configuration**](https://github.com/gconcepcion/pb-assembly#configuration)
++ [**Example Data Set**](https://github.com/gconcepcion/pb-assembly#example-data-set)
++ [**# New Features in PB Assembly**](https://github.com/gconcepcion/pb-assembly#new-features-in-pb-assembly)
++ [**FAQ**](https://github.com/gconcepcion/pb-assembly#faq)
++ [**Acknowledgements**](https://github.com/gconcepcion/pb-assembly#acknowledgements)
++ [**Citations**](https://github.com/gconcepcion/pb-assembly#citations)
++ [**Disclaimer**](https://github.com/gconcepcion/pb-assembly#disclaimer)
 
 
 # Availability
@@ -111,7 +117,7 @@ fc_run fc_run.cfg
 fc_unzip.py fc_unzip.cfg
 ```
 
-## Configuration
+# Configuration
 
 Both FALCON and FALCON_Unzip take a config file as their only input parameter.
 
@@ -120,7 +126,7 @@ below.
 
 Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb human genome assembly.
 
-### FALCON Configuration
+## FALCON Configuration
 
 The FALCON pipeline is complex and has a multitude of configuration options. Many of the tools that comprise 
 the FALCON Assembly pipeline were written by Gene Meyers and are extensively documented at his 
@@ -135,7 +141,7 @@ the FALCON Assembly pipeline were written by Gene Meyers and are extensively doc
  
 Below is a breakdown of the configuration options available to FALCON:
 
-#### Input
+### Input
 
 ```ini
 [General]
@@ -165,7 +171,7 @@ Recognized values are described below.
 |internal-median|     Applies the median-length ZMW filter only on internal subreads (ZMWs with >= 3 subreads) by running two passes over the data. For ZMWs with < 3 subreads, the maximum-length one is selected.
 |streamed-internal-median| Applies the median-length ZMW filter only on internal subreads (ZMWs with >= 3 subreads) by running a single pass over the data. The input subreads should be groupped by ZMW. For ZMWs with < 3 subreads, the maximum-length one is selected.
 
-#### Data Partitioning
+### Data Partitioning
 
 ```ini
 pa_DBsplit_option=-x500 -s200
@@ -177,7 +183,7 @@ For the first and second stages of FALCON, the data needs to be read in to a
 reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should not be used for asembly as it uses all reads per ZMW which can lead to errors is preassembly.
 
 
-#### Repeat Masking
+### Repeat Masking
 
 ```ini
 pa_HPCTANmask_option=
@@ -199,7 +205,7 @@ For information and theory on how to set up your rounds of repeat masking, consu
 [blog post](https://dazzlerblog.wordpress.com/2016/04/01/detecting-and-soft-masking-repeats/).
 
 
-#### Pre-assembly
+### Pre-assembly
 
 ```ini
 genome_size=0
@@ -241,7 +247,7 @@ parameter set to `-fog` which essentially attempts to maintain relative informat
 been broken.
 
 
-#### Pread overlapping
+### Pread overlapping
 
 ```ini
 ovlp_daligner_option=-e.96 -s1000 -h60 -t32
@@ -253,7 +259,7 @@ pre-assembly, however no repeat masking is performed and no consensus is
 called. Overlaps are identified and fed into the final assembly. The parameter options work the same 
 way as described above in the pre-assembly section.
 
-#### Final Assembly
+### Final Assembly
 
 ```ini
 overlap_filtering_setting=--max-diff 100 --max-cov 100 --min-cov 2
@@ -270,7 +276,7 @@ at the expense of additional chimeric / mis-assemblies.
 `length_cutoff_pr` is the minimum length of pre-assembled *preads* used for the final assembly. Typically, this value 
 is set to allow for approximately 15 to 30-fold coverage of corrected reads in the final assembly.
 
-#### Miscellaneous configuration options
+### Miscellaneous configuration options
 
 Additional configuration options that don't necessarily fit into one of the previous categories are described here.
 
@@ -292,7 +298,7 @@ The option `LA4Falcon_preload` passes the `-P` parameter to `LA4Falcon` which ca
 into memory. On slow filesystems this can speed things up significantly; but it will dramatically increase the 
 memory requirement for the consensus stage.
 
-#### Job Distribution
+### Job Distribution
 
 ```ini
 [job.defaults]
@@ -342,7 +348,7 @@ LAshow/LAsort stages respectively while `asm` refers to the final assembly. If y
 section, the `[job.defaults]` will be applied. `[job.step.da]`, `[job.step.la]`, `[job.step.cns]`, `[job.step.pda]`, 
 `[job.step.pla]`, and `[job.step.asm]` are the available sections.
  
-### FALCON_unzip Configuration
+## FALCON_unzip Configuration
 
 ```ini
 [General]
@@ -364,13 +370,13 @@ specify a list of your input bam files with `input_bam_fofn`.
 
 Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to your compute environment.
 
-#### Job Distribution
+### Job Distribution
 
 Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only difference
 are the job specific settings specific to FALCON-Unzip. Available sections are `[job.step.unzip_track_reads]`, 
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
 
-## Example test case
+# Example Data Set
 
 To test your installation above you can download and run this small 200kb test case. 
 
@@ -397,9 +403,9 @@ size greater than 0 in the `4-quiver/cns-output` directory.
 
 
 
-## New Features in PB Assembly
+# New Features in PB Assembly
 
-### FALCON
+## FALCON
 Repeat Masking
 Integration of Tandem repeat masking (done) and general repeat masking (in progress)
 
@@ -414,7 +420,7 @@ Performance Improvements
 -general workflow and resource specification improvements
 -easier integration of future features with Pbsmrtpipe
 
-### FALCON-Unzip
+## FALCON-Unzip
 Improved Haplotig Extraction
 -algorithm and data structure improvements reduce haplotype switching and improve extraction
 -can now handle circular contigs!
@@ -427,7 +433,7 @@ Performance Improvements
 -unzipping and polishing now part of single workflow
 
 
-## FAQ
+# FAQ
 
 #### Can I start from corrected reads?
 
@@ -560,8 +566,12 @@ of primary contig 000123F. The alignment position can be found in a [PAF](https:
 
 
 
-## Acknowledgements
+# Acknowledgements
 Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic for their numerous improvements.
 
-## Disclaimer
+# Citations
++ FALCON/FALCON-Unzip [Chin et al. (2016) Nature Methods 13:1050–1054](https://www.ncbi.nlm.nih.gov/pubmed/27749838)
++ HGAP [Chin et al. (2013) Nature Methods 10:563-9](https://www.ncbi.nlm.nih.gov/pubmed/23644548)
+
+# Disclaimer
 THIS WEBSITE AND CONTENT AND ALL SITE-RELATED SERVICES, INCLUDING ANY DATA, ARE PROVIDED "AS IS," WITH ALL FAULTS, WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ANY WARRANTIES OF MERCHANTABILITY, SATISFACTORY QUALITY, NON-INFRINGEMENT OR FITNESS FOR A PARTICULAR PURPOSE. YOU ASSUME TOTAL RESPONSIBILITY AND RISK FOR YOUR USE OF THIS SITE, ALL SITE-RELATED SERVICES, AND ANY THIRD PARTY WEBSITES OR APPLICATIONS. NO ORAL OR WRITTEN INFORMATION OR ADVICE SHALL CREATE A WARRANTY OF ANY KIND. ANY REFERENCES TO SPECIFIC PRODUCTS OR SERVICES ON THE WEBSITES DO NOT CONSTITUTE OR IMPLY A RECOMMENDATION OR ENDORSEMENT BY PACIFIC BIOSCIENCES.
