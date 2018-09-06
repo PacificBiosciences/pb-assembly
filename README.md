@@ -41,7 +41,7 @@ Furthermore, new parameters may be added or changed at any time so please procee
 # Scope
 
 _pb-assembly_ is the bioconda recipe encompassing all code and dependencies necessary to
-run the FALCON assembly pipeline, subsequent extended phasing of a genome with FALCON_Unzip
+run the FALCON assembly pipeline, subsequent extended phasing of a genome with FALCON-Unzip
 and polishing with Arrow.
 
 Installed package recipes include:
@@ -114,8 +114,9 @@ recommended by Gene Meyer's. If you wish to modify your
 [dusting parameters](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/) you can set the 
 flag `pa_DBdust_option`.
 
-Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag.
-Recognized values are described below.
+Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag. The default is `streamed-median` which uses the median-length subread for each ZMW (sequencing reaction well). Choosing the longest subread can lead to an enrichment in chimeric molecules. Users will rarely need to change this option from the default.
+
+Recognized values are described below. 
 
 |Value | Setting          
 |:-----|----------------
