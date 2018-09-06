@@ -7,7 +7,7 @@
 + [**Availability**](https://github.com/gconcepcion/pb-assembly#availability)
 + [**Scope**](https://github.com/gconcepcion/pb-assembly#scope)
 + [**General Overview**](https://github.com/gconcepcion/pb-assembly#general-overview)
-+ [**New Features in PB Assembly**](https://github.com/gconcepcion/pb-assembly#new-features-in-pb-assembly)
++ [**What's New in PB Assembly**](https://github.com/gconcepcion/pb-assembly#whats-new-in-pb-assembly)
 + [**Usage**](https://github.com/gconcepcion/pb-assembly#usage)
 + [**Configuration**](https://github.com/gconcepcion/pb-assembly#configuration)
 + [**Example Data Set**](https://github.com/gconcepcion/pb-assembly#example-data-set)
