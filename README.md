@@ -491,7 +491,6 @@ contig. For each sequence inside `a_ctg_base.fasta`, there are one or more assoc
 
 #### Why don't I have two perfectly phased haplotypes after FALCON-Unzip?
 
-
 It's useful to first understand that not all genomes are alike. Haploid genomes are the ideal use case of genome 
 assembly since there is only one haplotype phase present and assembly is trivial if you have reads long enough to 
 span repeats. Diploid and (allo/auto)polyploid genomes become difficult as there are two or more haplotype 
@@ -548,6 +547,45 @@ filtered with delta-filter and divergence was estimated with `show-coords`. (Dat
 Paolo Ajmone-Marsan, David Hume, Erich Jarvis, John Henning, Dave Hendrix, Carlos Machado, and Iago Hale). 
 
 <h1 align="center"><img width="600px" src="img/unzippedHapDiv.png" alt="Haplotype diversity" /></h1>
+
+
+#### How do I assess performance of preassembly / data quality?
+
+Preassembly performance is summarized in the file: `0-rawreads/report/pre_assembly_stats.json`. 
+
+.. code-block:: bash
+
+        $ cat 0-rawreads/report/pre_assembly_stats.json
+
+        "genome_length": 4652500,
+        "length_cutoff": 15000,
+        "preassembled_bases": 350302363,
+        "preassembled_coverage": 75.293,
+        "preassembled_mean": 10730.33,
+        "preassembled_n50": 16120,
+        "preassembled_p95": 22741,
+        "preassembled_reads": 32646,
+        "preassembled_seed_fragmentation": 1.451,       # number split preads / seed reads
+        "preassembled_seed_truncation": 4453.782,       # ave bp lost per pread due to low cov
+        "preassembled_yield": 0.758,                    # total pread bp / seed read bp
+        "raw_bases": 964281429,
+        "raw_coverage": 207.261,
+        "raw_mean": 10626.042,
+        "raw_n50": 14591,
+        "raw_p95": 23194,
+        "raw_reads": 90747,
+        "seed_bases": 461851093,
+        "seed_coverage": 99.269,                        
+        "seed_mean": 20029.103,
+        "seed_n50": 19855,
+        "seed_p95": 28307,
+        "seed_reads": 23059
+
+A note on these statistics: in the process of created preads, seeds reads with insufficient
+raw read coverage (usually due to base errors) will be split or truncated. The preassembled seed
+fragmentation, truncation, and yield stats summarize the quality of pread assembly.
+A good preassembled yield should be greater than 50%. Insufficient coverage or low quality data are common reasons for poor preassembled yield.
+
 
 
 #### Why does FALCON have trouble assembling my amplicon data?
