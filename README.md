@@ -119,7 +119,7 @@ recommended by Gene Meyer's. If you wish to modify your
 [dusting parameters](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/) you can set the 
 flag `pa_DBdust_option`.
 
-Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag. The default is `streamed-median` which uses the median-length subread for each ZMW (sequencing reaction well). Choosing the longest subread can lead to an enrichment in chimeric molecules. Users will rarely need to change this option from the default.
+Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag. The default is `streamed-median` which uses the median-length subread for each [ZMW](https://www.pacb.com/smrt-science/smrt-sequencing/) (sequencing reaction well). Choosing the longest subread can lead to an enrichment in chimeric molecules. Users will rarely need to change this option from the default.
 
 Recognized values are described below. 
 
@@ -140,7 +140,7 @@ ovlp_DBsplit_option=-x500 -s200
 
 For the first and second stages of FALCON, the data needs to be read in to a 
 [dazzler DB](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/). The `-x` flag filters 
-reads smaller than what's specified while the `-s` flag controls the size of DB blocks. 
+reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should not be used for asembly as it uses all reads per ZMW which can lead to errors is preassembly.
 
 
 #### Repeat Masking
