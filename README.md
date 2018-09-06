@@ -7,10 +7,10 @@
 + [**Availability**](https://github.com/gconcepcion/pb-assembly#availability)
 + [**Scope**](https://github.com/gconcepcion/pb-assembly#scope)
 + [**General Overview**](https://github.com/gconcepcion/pb-assembly#general-overview)
++ [**New Features in PB Assembly**](https://github.com/gconcepcion/pb-assembly#new-features-in-pb-assembly)
 + [**Usage**](https://github.com/gconcepcion/pb-assembly#usage)
 + [**Configuration**](https://github.com/gconcepcion/pb-assembly#configuration)
 + [**Example Data Set**](https://github.com/gconcepcion/pb-assembly#example-data-set)
-+ [**# New Features in PB Assembly**](https://github.com/gconcepcion/pb-assembly#new-features-in-pb-assembly)
 + [**FAQ**](https://github.com/gconcepcion/pb-assembly#faq)
 + [**Acknowledgements**](https://github.com/gconcepcion/pb-assembly#acknowledgements)
 + [**Citations**](https://github.com/gconcepcion/pb-assembly#citations)
@@ -102,6 +102,37 @@ Below are examples of alignments between associate and primary contigs from FALC
 primary contigs from FALCON-Unzip.
 
 <h1 align="center"><img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" /></h1>
+
+# What's New in PB Assembly
+
+## FALCON
++ Repeat Masking
+Integration of Tandem repeat masking (done) and general repeat masking (in progress)
+
++ **New!** GFA and Placement Files
+-GFA-1 and GFA-2 output for assembly graphs
+-placement files for associate contigs (contig.gfa2)
+
++ Increased Accuracy of Associate Contigs
+-algorithm and alignment improvements (Edlib integration)
+
++ Performance Improvements
+-general workflow and resource specification improvements
+-easier integration of future features with Pbsmrtpipe
+
+## FALCON-Unzip
++ Improved Haplotig Extraction
+-algorithm and data structure improvements reduce haplotype switching and improve extraction
+-can now handle circular contigs!
+
++ **New!** Placement Files
+-haplotig placement (PAF format) generated in 3-unzip stage
+
++ Performance Improvements
+-use of minimap2 instead of BLASR for phasing in Unzip reduces time and memory requirements
+-unzipping and polishing now part of single workflow
+
+
 
 
 # Usage
@@ -348,7 +379,7 @@ LAshow/LAsort stages respectively while `asm` refers to the final assembly. If y
 section, the `[job.defaults]` will be applied. `[job.step.da]`, `[job.step.la]`, `[job.step.cns]`, `[job.step.pda]`, 
 `[job.step.pla]`, and `[job.step.asm]` are the available sections.
  
-## FALCON_unzip Configuration
+## FALCON-Unzip Configuration
 
 ```ini
 [General]
@@ -402,35 +433,6 @@ size greater than 0 in the `4-quiver/cns-output` directory.
 
 
 
-
-# New Features in PB Assembly
-
-## FALCON
-Repeat Masking
-Integration of Tandem repeat masking (done) and general repeat masking (in progress)
-
-New! GFA and Placement Files
-- GFA-1 and GFA-2 output for assembly graphs
--placement files for associate contigs (contig.gfa2)
-
-Increased Accuracy of Associate Contigs
--algorithm and alignment improvements (Edlib integration)
-
-Performance Improvements
--general workflow and resource specification improvements
--easier integration of future features with Pbsmrtpipe
-
-## FALCON-Unzip
-Improved Haplotig Extraction
--algorithm and data structure improvements reduce haplotype switching and improve extraction
--can now handle circular contigs!
-
-New! Placement Files
--haplotig placement (PAF format) generated in 3-unzip stage
-
-Performance Improvements
--use of minimap2 instead of BLASR for phasing in Unzip reduces time and memory requirements
--unzipping and polishing now part of single workflow
 
 
 # FAQ
