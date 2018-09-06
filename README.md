@@ -103,7 +103,9 @@ primary contigs from FALCON-Unzip.
 
 <h1 align="center"><img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" /></h1>
 
-# What's New in PB Assembly (September 2018)
+# What's New in PB Assembly
+
+**(September 2018)**
 
 ## FALCON
 + Repeat Masking
