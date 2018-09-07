@@ -162,17 +162,21 @@ Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent
 
 ## FALCON Configuration
 
-The FALCON pipeline is complex and has a multitude of configuration options. Many of the tools that comprise 
-the FALCON Assembly pipeline were written by Gene Meyers and are extensively documented at his 
-[dazzlerblog](http://dazzlerblog.wordpress.com). The FALCON *de novo* assembly pipeline consists of 3 basic stages:
+The FALCON pipeline has three main steps which occur in distinct directories:
 
 1) raw read overlapping and consensus calling, also known as **pre-assembly**
+-subdirectory: `0-rawreads`
 
 2) pre-assembled read overlapping or **pread overlapping**
+-subdirectory: `1-preads_ovl`
 
 3) contig assembly
- 
- 
+-subdirectory: `2-asm-falcon`
+
+ Many of the tools that comprise 
+the FALCON Assembly pipeline were written by Gene Meyers and are extensively documented at his 
+[dazzlerblog](http://dazzlerblog.wordpress.com).
+
 Below is a breakdown of the configuration options available to FALCON:
 
 ### Input
