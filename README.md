@@ -208,13 +208,18 @@ Recognized values are described below.
 ### Data Partitioning
 
 ```ini
+# large genomes
 pa_DBsplit_option=-x500 -s200
 ovlp_DBsplit_option=-x500 -s200
+
+# microbes
+pa_DBsplit_option = -x500 -s50
+ovlp_DBsplit_option = -x500 -s50
 ```
 
 For the first and second stages of FALCON, the data needs to be read in to a 
 [dazzler DB](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/). The `-x` flag filters 
-reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should not be used for asembly as it uses all reads per ZMW which can lead to errors is preassembly.
+reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should not be used for assembly as it uses all reads per ZMW which can lead to errors is preassembly.
 
 
 ### Repeat Masking
