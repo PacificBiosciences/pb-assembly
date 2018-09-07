@@ -419,8 +419,8 @@ FALCON-Unzip has two main steps which occur in distinct directories:
 
 | Subdirectory | Description          
 |:---------------------|-----------------------------------------------------------------------
-| `3-unzip` | read alignment, SNP calling, read phasing, and reassembly                                           |
-|`4-quiver`| phased polishing in which reads are used to polish in a haplotype-specific manner
+| `3-unzip` | read alignment, SNP calling, read phasing, and diploid assembly of primary contigs and haplotigs                           
+|`4-quiver`| phased polishing in which reads are used to polish in a haplotype-specific manner using BLASR and arrow
 
 
 ```ini
