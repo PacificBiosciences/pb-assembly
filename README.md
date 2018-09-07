@@ -65,6 +65,7 @@ Installed package recipes include:
     
 # General Overview
 
+## FALCON and FALCON-Unzip
 FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
 Single-Molecule Real-Time (SMRT) sequences. FALCON is a diploid-aware assembler which follows 
 the hierarchical genome assembly process (HGAP) and is optimized for large genome assembly (e.g. 
@@ -75,16 +76,15 @@ associated with a homologous genomic region on an p-contig.
 FALCON-Unzip is a true diploid assembler. It takes the contigs from FALCON and phases the reads 
 based on heterozygous SNPs identified in the initial assembly. It then produces a set of partially-phased primary contigs and fully-phased haplotigs which represent divergent haplotypes.
 
-## Detailed Description of Assembly
-The hierarchical genome assembly process proceeds in two rounds. The first round of assembly involves
-the selection of seed reads or the longest reads in the dataset (user-defined length_cutoff). All 
+## Hierarchical Genome Assembly Process (aka non-hybrid PacBio assembly)
+The hierarchical genome assembly process proceeds in two rounds. The first round involves
+the selection of seed reads or the longest reads in the dataset (user-defined `length_cutoff`). All 
 shorter reads are aligned to the seed reads, in order to generate consensus sequences with high accuracy. 
-We refer to these as pre-assembled reads but they can also be thought of as “error corrected” reads. 
-During the pre-assembly process, seed reads may be split or trimmed at regions of low read coverage 
-(user-defined min_cov for falcon_sense_option). The performance of the pre-assembly process is captured 
-in the pre-assembly stats file.
+We refer to these as pre-assembled reads and they can also be thought of as “error corrected” reads. Preassembled reads tend to have accuracy > 99%.
 
 In the next round of HGAP, the preads are aligned to each other and assembled into genomic contigs.
+
+Assembly is typically followed by a round of polishing where all raw PacBio subreads are aligned to the draft contigs and genomic consensus is performed. Polishing greatly increases base quality of the assembly.
 
 <h1 align="center"><img width="600px" src="img/HGAP.png" alt="HGAP" /></h1>
 
@@ -94,7 +94,8 @@ The unzip process will extend haplotype phasing beyond “bubble” regions, inc
 contig sequence. It is important to note that while individual haplotype blocks are phased, phasing does 
 not extend between haplotigs. Thus, in part C) of the figure below, haplotig_1 and haplotig_2 may 
 originate from different parental haplotypes. Additional information is needed to phase the haplotype 
-blocks with each other.
+blocks with each other such as Hi-C, see [FALCON-Phase](https://github.com/phasegenomics/FALCON-Phase) 
+as a method for extended phasing.
 
 <h1 align="center"><img width="600px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" /></h1>
 
