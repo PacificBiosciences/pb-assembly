@@ -276,10 +276,12 @@ parameters are passed to the `daligner` sub-commands.
 
 To understand the theory and how to configure `daligner` see 
 [this blog post](https://dazzlerblog.wordpress.com/2014/07/10/dalign-fast-and-sensitive-detection-of-all-pairwise-local-alignments/)
-and this [command reference guide](https://dazzlerblog.wordpress.com/command-guides/daligner-command-reference-guide/). In general we recommend the following:
+and this [command reference guide](https://dazzlerblog.wordpress.com/command-guides/daligner-command-reference-guide/).
+
+In general we recommend the following:
 
 e: average correlation rate (average sequence identity)
--0.70 (low quality data) - 0.78 (high quality data)
+-0.70 (low quality data) - 0.80 (high quality data)
 -0.75 or higher for outbred organisms to present haplotype collapse in preassembly
 
 l: minimum length of overlap
@@ -317,7 +319,7 @@ e: average correlation rate (average sequence identity)
 -0.93 (inbred) - 0.96 (outbred)
 
 l: minimum length of overlap
--1800 (poor preassembly, short/low quality library) - 6000 (long, high quality library. high coverage)
+-1800 (poor preassembly, short/low quality library) - 6000 (long, high quality library)
 
 k: kmer size
 -18 (low quality) - 24 (most cases)
@@ -413,6 +415,14 @@ section, the `[job.defaults]` will be applied. `[job.step.da]`, `[job.step.la]`,
  
 ## FALCON-Unzip Configuration
 
+FALCON-Unzip has two main steps which occur in distinct directories:
+
+| Subdirectory | Description          
+|:---------------------|-----------------------------------------------------------------------
+| `3-unzip` | read alignment, SNP calling, read phasing, and reassembly                                           |
+|`4-quiver`| phased polishing in which reads are used to polish in a haplotype-specific manner
+
+
 ```ini
 [General]
 max_n_open_files = 1000
@@ -462,7 +472,6 @@ fc_unzip.py fc_unzip.cfg
 
 If everything was installed properly the test case will exit cleanly and you should find fasta files with a  
 size greater than 0 in the `4-quiver/cns-output` directory.
-
 
 
 
