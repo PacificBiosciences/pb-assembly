@@ -181,8 +181,8 @@ Below is a breakdown of the configuration options available to FALCON:
 [General]
 input_fofn=input.fofn
 input_type=raw
-pa_DBdust_option=
-pa_fasta_filter_option=pass
+pa_DBdust_option=true
+pa_fasta_filter_option=streamed-median
 ```
 
 Your list of paths to the input fasta files is specified in your `input_fofn` and your `input_type` can be
@@ -219,7 +219,7 @@ ovlp_DBsplit_option = -x500 -s50
 
 For the first and second stages of FALCON, the data needs to be read in to a 
 [dazzler DB](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/). The `-x` flag filters 
-reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should not be used for assembly as it uses all reads per ZMW which can lead to errors is preassembly.
+reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should not be used here in conjunction with `pa_fasta_filter_option=pass` as it uses *all reads per ZMW* which can lead to errors is preassembly.
 
 
 ### Repeat Masking
