@@ -212,7 +212,7 @@ Recognized values are described below.
 pa_DBsplit_option=-x500 -s200
 ovlp_DBsplit_option=-x500 -s200
 
-# microbes
+# small genomes (<10Mb)
 pa_DBsplit_option = -x500 -s50
 ovlp_DBsplit_option = -x500 -s50
 ```
@@ -232,7 +232,7 @@ pa_REPmask_code=0,300;0,300;0,300
 Repeat masking occurs in two phases, **Tandem** and **Interspersed**. Tandem repeat masking is run
 with a modified version of `daligner` called `datander` and thus uses a similar 
 [parameter set](https://dazzlerblog.wordpress.com/command-guides/damasker-commands/). Whatever settings you use
- for pre-assembly daligner overlapping in the next section will be used here for tandem repeat masking. You can 
+ for pre-assembly daligner overlapping in the next section (`pa_daligner_option`) will be used here for tandem repeat masking. You can 
  supply additional arguments for tandem repeat masking that will be passed to `HPC.TANmask` with the 
  `pa_HPCTANmask_option`.
  
@@ -248,11 +248,11 @@ For information and theory on how to set up your rounds of repeat masking, consu
 
 ```ini
 genome_size=0
-seed_coverage=20
-length_cutoff=1000    
+seed_coverage=30
+length_cutoff=-1    
 pa_HPCdaligner_option=-v -B128 -M24
-pa_daligner_option=-e.8 -l2000 -k18 -h480  -w8 -s100
-falcon_sense_option=--output-multi --min-idt 0.70 --min-cov 2 --max-n-read 1800
+pa_daligner_option=-e0.8 -l2000 -k18 -h480  -w8 -s100
+falcon_sense_option=--output-multi --min-idt 0.70 --min-cov 3 --max-n-read 400
 falcon_sense_greedy=False
 ```
 During pre-assembly, the PacBio subreads are aligned and error correction is performed. The longest subreads are chosen as `seed reads` and all shorter reads are aligned to them and consensus sequences are generated from the alignments. These consensus sequences are called `pre-assembled reads` or `preads` and generally have accuracy greater than 99% or QV20.
@@ -266,24 +266,38 @@ carries through to the unzipping algorithm, and any reads smaller than that cuto
 For assembly alone, there is likely no harm in setting a high `length_cutoff`, unless you are expecting a certain
 feature like micro chromosomes or short circular plasmids. Howevere, if you are planning to unzip, then you will be 
 artificially limiting your phasing dataset and it's probably in your interest to have a 
-lower `length_cutoff`.
+lower `length_cutoff`. The majority of computation occurs in preassembly so if compute time is important to you, increasing `length_cutoff` will increase efficiency but with the tradeoffs described above.
  
 Overlap options for `daligner` are set with the `pa_HPCdaligner_option` and `pa_daligner_option` flags. Previous 
 versions of FALCON had a single parameter. This is now split into two flags, one that affects requested 
 resources `pa_HPCdaligner_option` and one that affects the overlap search `pa_daligner_option`.
 For `pa_HPCdaligner_option`, the `-v` parameter is passed to the `LAsort` and `LAmerge` programs while `-B` and `-M` 
-parameters are passed to the `daligner` sub-commands. To understand the theory and how to configure `daligner` see 
+parameters are passed to the `daligner` sub-commands.
+
+To understand the theory and how to configure `daligner` see 
 [this blog post](https://dazzlerblog.wordpress.com/2014/07/10/dalign-fast-and-sensitive-detection-of-all-pairwise-local-alignments/)
-and this [command reference guide](https://dazzlerblog.wordpress.com/command-guides/daligner-command-reference-guide/) 
+and this [command reference guide](https://dazzlerblog.wordpress.com/command-guides/daligner-command-reference-guide/). In general we recommend the following:
+
+e: average correlation rate (average sequence identity)
+-0.70 (low quality data) - 0.78 (high quality data)
+-0.75 or higher for outbred organisms to present haplotype collapse in preassembly
+
+l: minimum length of overlap
+-1000 (shorter library) - 5000 (longer library)
+
+k: kmer size
+-14 (low quality data) - 18 (high quality data)
+-lower k has higher sensitivity, uses more storage and memoery, runs slower, better for lower quality data
+-higher k has higher specificity, uses less storage and memory, runs faster, better for high quality data
  
 You can configure basic pre-assembly consensus calling options with the `falcon_sense_option` flag. The `--output-multi`
 flag is necessary for generating proper fasta headers and should not be removed unless your specific use case requires 
 it. The parameters `--min-idt`, `--min-cov` and `--max-n-read` set the minimum alignment identity, minimum 
-coverage necessary and max number of reads, respectively, for calling consensus with the `arrow` consensus algorthim.
+coverage necessary and max number of reads, respectively, for calling consensus to make the preads.
 
 By default, `-fo` are the parameters passed to `LA4Falcon`. The option `falcon_sense_greedy` changes this
 parameter set to `-fog` which essentially attempts to maintain relative information between reads that have 
-been broken.
+been broken due to regions of low quality.
 
 
 ### Pread overlapping
@@ -298,6 +312,16 @@ pre-assembly, however no repeat masking is performed and no consensus is
 called. Overlaps are identified and fed into the final assembly. The parameter options work the same 
 way as described above in the pre-assembly section.
 
+Recommendation for preads: 
+e: average correlation rate (average sequence identity)
+-0.93 (inbred) - 0.96 (outbred)
+
+l: minimum length of overlap
+-1800 (poor preassembly, short/low quality library) - 6000 (long, high quality library. high coverage)
+
+k: kmer size
+-18 (low quality) - 24 (most cases)
+
 ### Final Assembly
 
 ```ini
@@ -306,7 +330,7 @@ fc_ovlp_to_graph_option=
 length_cutoff_pr=1000
 ```
 
-The option `overlap_filter_setting` allows setting criteria for filtering corrected read overlaps. 
+The option `overlap_filter_setting` allows setting criteria for filtering pread overlaps. 
 `--max-diff` filters overlaps that have a coverage difference between the 5' and 3' ends larger than specified. 
 `--max-cov` filters highly represented overlaps typically caused by contaminants or repeats and `--min-cov` allows
 specification of a minimum overlap coverage. Setting `--min-cov` too low will allow more overlaps to be detected
