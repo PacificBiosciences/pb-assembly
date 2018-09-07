@@ -443,6 +443,8 @@ size greater than 0 in the `4-quiver/cns-output` directory.
 
 https://github.com/PacificBiosciences/pbbioconda/issues
 
+Please use this handy [bug report template](https://github.com/PacificBiosciences/pbbioconda/issues/new?template=bug_report.md).
+
 
 #### Can I start from corrected reads?
 
