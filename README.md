@@ -44,7 +44,7 @@ Not for use in diagnostics procedures.
 No support for source builds.
 No support via mail to developers.
 Please *do not* contact a PacBio Field Applications Scientist or PacBio Customer Service for assistance.
-Please file GitHub issues for problems and questions.
+Please file GitHub issues [here](https://github.com/PacificBiosciences/pbbioconda/issues) for problems and questions.
 
 **This is an early beta!** Expect extreme changes and different output between
 versions until release of the first stable release.
