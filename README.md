@@ -439,6 +439,11 @@ size greater than 0 in the `4-quiver/cns-output` directory.
 
 # FAQ
 
+#### Where can I report issues / bugs / feature requests?
+
+https://github.com/PacificBiosciences/pbbioconda/issues
+
+
 #### Can I start from corrected reads?
 
 Yes. The option `input_type` can be set to either `raw` or `preads`. In the case of the latter,
