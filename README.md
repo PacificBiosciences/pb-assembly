@@ -247,7 +247,7 @@ For information and theory on how to set up your rounds of repeat masking, consu
 ### Pre-assembly
 
 ```ini
-genome_size=0
+genome_size=1000000000
 seed_coverage=30
 length_cutoff=-1    
 pa_HPCdaligner_option=-v -B128 -M24
