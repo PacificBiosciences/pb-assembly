@@ -165,12 +165,15 @@ Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent
 The FALCON pipeline has three main steps which occur in distinct directories:
 
 1) raw read overlapping and consensus calling, also known as **pre-assembly**
+
 -subdirectory: `0-rawreads`
 
 2) pre-assembled read overlapping or **pread overlapping**
+
 -subdirectory: `1-preads_ovl`
 
 3) contig assembly
+
 -subdirectory: `2-asm-falcon`
 
  Many of the tools that comprise 
