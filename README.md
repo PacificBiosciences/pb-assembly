@@ -4,17 +4,17 @@
 </p>
 
 ***
-+ [**Availability**](https://github.com/gconcepcion/pb-assembly#availability)
-+ [**Scope**](https://github.com/gconcepcion/pb-assembly#scope)
-+ [**General Overview**](https://github.com/gconcepcion/pb-assembly#general-overview)
-+ [**What's New in PB Assembly**](https://github.com/gconcepcion/pb-assembly#whats-new-in-pb-assembly)
-+ [**Usage**](https://github.com/gconcepcion/pb-assembly#usage)
-+ [**Configuration**](https://github.com/gconcepcion/pb-assembly#configuration)
-+ [**Example Data Set**](https://github.com/gconcepcion/pb-assembly#example-data-set)
-+ [**FAQ**](https://github.com/gconcepcion/pb-assembly#faq)
-+ [**Acknowledgements**](https://github.com/gconcepcion/pb-assembly#acknowledgements)
-+ [**Citations**](https://github.com/gconcepcion/pb-assembly#citations)
-+ [**Disclaimer**](https://github.com/gconcepcion/pb-assembly#disclaimer)
++ [**Availability**](#availability)
++ [**Scope**](#scope)
++ [**General Overview**](#general-overview)
++ [**What's New in PB Assembly**](#whats-new-in-pb-assembly)
++ [**Usage**](#usage)
++ [**Configuration**](#configuration)
++ [**Example Data Set**](#example-data-set)
++ [**FAQ**](#faq)
++ [**Acknowledgements**](#acknowledgements)
++ [**Citations**](#citations)
++ [**Disclaimer**](#disclaimer)
 
 
 # Availability
@@ -33,22 +33,14 @@ conda create -n denovo_asm
 source activate denovo_asm
 conda install pb-assembly
 ```
-    
+        
+Please refer to our [official pbbioconda page](https://github.com/PacificBiosciences/pbbioconda)
+for information on Installation, Support, License, Copyright, and Disclaimer.
+
+GitHub issues can be filed [here](https://github.com/PacificBiosciences/pbbioconda/issues) for problems and questions.
+
 If you are looking for a GUI based long read *de novo* genome assembler, you are urged to learn about 
 [HGAP4](https://www.pacb.com/videos/tutorial-hgap4-de-novo-assembly-application/)
-    
-These binaries are not ISO compliant.
-For research only.
-Not for use in diagnostics procedures.
-
-No support for source builds.
-No support via mail to developers.
-Please *do not* contact a PacBio Field Applications Scientist or PacBio Customer Service for assistance.
-Please file GitHub issues [here](https://github.com/gconcepcion/pb-assembly/issues) for problems and questions.
-
-**This is an early beta!** Expect extreme changes and different output between
-versions until release of the first stable release.
-Furthermore, new parameters may be added or changed at any time so please proceed with caution.
 
 # Scope
 
