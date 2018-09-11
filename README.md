@@ -66,17 +66,20 @@ set of alternate contigs (a-contigs) which represent divergent allelic variants.
 associated with a homologous genomic region on an p-contig.
 
 FALCON-Unzip is a true diploid assembler. It takes the contigs from FALCON and phases the reads 
-based on heterozygous SNPs identified in the initial assembly. It then produces a set of partially-phased primary contigs and fully-phased haplotigs which represent divergent haplotypes.
+based on heterozygous SNPs identified in the initial assembly. It then produces a set of partially-phased primary 
+contigs and fully-phased haplotigs which represent divergent haplotypes.
 
 ## Hierarchical Genome Assembly Process (aka non-hybrid PacBio assembly)
 The hierarchical genome assembly process proceeds in two rounds. The first round involves
 the selection of seed reads or the longest reads in the dataset (user-defined `length_cutoff`). All 
 shorter reads are aligned to the seed reads, in order to generate consensus sequences with high accuracy. 
-We refer to these as pre-assembled reads and they can also be thought of as “error corrected” reads. Preassembled reads tend to have accuracy > 99%.
+We refer to these as pre-assembled reads and they can also be thought of as “error corrected” reads. Preassembled 
+reads tend to have accuracy > 99%.
 
 In the next round of HGAP, the preads are aligned to each other and assembled into genomic contigs.
 
-Assembly is typically followed by a round of polishing where all raw PacBio subreads are aligned to the draft contigs and genomic consensus is performed. Polishing greatly increases base quality of the assembly.
+Assembly is typically followed by a round of polishing where all raw PacBio subreads are aligned to the draft 
+contigs and genomic consensus is performed. Polishing greatly increases base quality of the assembly.
 
 <h1 align="center"><img width="600px" src="img/HGAP.png" alt="HGAP" /></h1>
 
@@ -185,16 +188,18 @@ recommended by Gene Meyer's. If you wish to modify your
 [dusting parameters](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/) you can set the 
 flag `pa_DBdust_option`.
 
-Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag. The default is `streamed-median` which uses the median-length subread for each [ZMW](https://www.pacb.com/smrt-science/smrt-sequencing/) (sequencing reaction well). Choosing the longest subread can lead to an enrichment in chimeric molecules. Users will rarely need to change this option from the default.
+Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag. 
+The default is `streamed-median` which uses the median-length subread for each 
+[ZMW](https://www.pacb.com/smrt-science/smrt-sequencing/) (sequencing reaction well). Choosing the longest 
+subread can lead to an enrichment in chimeric molecules. Users will rarely need to change this option from the 
+default.
 
 Recognized values are described below. 
 
 |Value | Setting          
 |:-----|----------------
 |pass  |The no-op filter - passes every FASTA record to the database.                                                                           |
-|median|Applies the median-length ZMW filter by running two passes over the data. Only one subread per ZMW is output, based on median-length selection.
 |streamed-median|     Applies the median-length ZMW filter by running a single-pass over the data. The input subreads should be groupped by ZMW.
-|internal-median|     Applies the median-length ZMW filter only on internal subreads (ZMWs with >= 3 subreads) by running two passes over the data. For ZMWs with < 3 subreads, the maximum-length one is selected.
 |streamed-internal-median| Applies the median-length ZMW filter only on internal subreads (ZMWs with >= 3 subreads) by running a single pass over the data. The input subreads should be groupped by ZMW. For ZMWs with < 3 subreads, the maximum-length one is selected.
 
 ### Data Partitioning
@@ -211,7 +216,9 @@ ovlp_DBsplit_option = -x500 -s50
 
 For the first and second stages of FALCON, the data needs to be read in to a 
 [dazzler DB](https://dazzlerblog.wordpress.com/command-guides/dazz_db-command-guide/). The `-x` flag filters 
-reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should not be used here in conjunction with `pa_fasta_filter_option=pass` as it uses *all reads per ZMW* which can lead to errors is preassembly.
+reads smaller than what's specified while the `-s` flag controls the size of DB blocks. The `-a` option should 
+not be used here in conjunction with `pa_fasta_filter_option=pass` as it uses *all reads per ZMW* which can lead 
+to errors is preassembly.
 
 
 ### Repeat Masking
@@ -224,9 +231,9 @@ pa_REPmask_code=0,300;0,300;0,300
 Repeat masking occurs in two phases, **Tandem** and **Interspersed**. Tandem repeat masking is run
 with a modified version of `daligner` called `datander` and thus uses a similar 
 [parameter set](https://dazzlerblog.wordpress.com/command-guides/damasker-commands/). Whatever settings you use
- for pre-assembly daligner overlapping in the next section (`pa_daligner_option`) will be used here for tandem repeat masking. You can 
- supply additional arguments for tandem repeat masking that will be passed to `HPC.TANmask` with the 
- `pa_HPCTANmask_option`.
+ for pre-assembly daligner overlapping in the next section (`pa_daligner_option`) will be used here for tandem 
+ repeat masking. You can supply additional arguments for tandem repeat masking that will be passed to `HPC.TANmask` 
+ with the `pa_HPCTANmask_option`.
  
 The second phase of masking deals with interspersed repeats and can be run in up to 3 iterations specified with the
 `pa_REPmask_code` option. The parameters needed for each iteration are both the group size and coverage specified 
@@ -247,18 +254,22 @@ pa_daligner_option=-e0.8 -l2000 -k18 -h480  -w8 -s100
 falcon_sense_option=--output-multi --min-idt 0.70 --min-cov 3 --max-n-read 400
 falcon_sense_greedy=False
 ```
-During pre-assembly, the PacBio subreads are aligned and error correction is performed. The longest subreads are chosen as `seed reads` and all shorter reads are aligned to them and consensus sequences are generated from the alignments. These consensus sequences are called `pre-assembled reads` or `preads` and generally have accuracy greater than 99% or QV20.
+During pre-assembly, the PacBio subreads are aligned and error correction is performed. The longest subreads are 
+chosen as *seed reads* and all shorter reads are aligned to them and consensus sequences are generated from the 
+alignments. These consensus sequences are called *pre-assembled reads* or `preads` and generally have accuracy 
+greater than 99% or QV20.
 
 If you wish to auto-calculate your seed read coverage, then it's necessary to enter your `genome_size` in base
-pairs, the desired `seed_coverage` as well as set `length_cutoff=-1` to force the auto-calculation. We generally recommend `20-40x` seed coverage. Alternatively, 
-if you don't know your genome size, are unsure of the `seed_coverage` you would like to use or if you would rather 
-just leverage all reads above a specific length, you can use the the `length_cutoff` flag to
-manually set that limit. It's important to note that whatever value `length_cutoff` gets set to is a limit that
-carries through to the unzipping algorithm, and any reads smaller than that cutoff will not be used for phasing.
-For assembly alone, there is likely no harm in setting a high `length_cutoff`, unless you are expecting a certain
-feature like micro chromosomes or short circular plasmids. Howevere, if you are planning to unzip, then you will be 
-artificially limiting your phasing dataset and it's probably in your interest to have a 
-lower `length_cutoff`. The majority of computation occurs in preassembly so if compute time is important to you, increasing `length_cutoff` will increase efficiency but with the tradeoffs described above.
+pairs, the desired `seed_coverage` as well as set `length_cutoff=-1` to force the auto-calculation. We generally 
+recommend `20-40x` seed coverage. Alternatively, if you don't know your genome size, are unsure of the `seed_coverage` 
+you would like to use or if you would rather just leverage all reads above a specific length, you can use the the 
+`length_cutoff` flag to manually set that limit. It's important to note that whatever value `length_cutoff` gets set 
+to is a limit that carries through to the unzipping algorithm, and any reads smaller than that cutoff will not be 
+used for phasing. For assembly alone, there is likely no harm in setting a high `length_cutoff`, unless you are 
+expecting a certain feature like micro chromosomes or short circular plasmids. Howevere, if you are planning to unzip, 
+then you will be artificially limiting your phasing dataset and it's probably in your interest to have a 
+lower `length_cutoff`. The majority of computation occurs in preassembly so if compute time is important to you, 
+increasing `length_cutoff` will increase efficiency but with the tradeoffs described above.
  
 Overlap options for `daligner` are set with the `pa_HPCdaligner_option` and `pa_daligner_option` flags. Previous 
 versions of FALCON had a single parameter. This is now split into two flags, one that affects requested 
@@ -270,19 +281,23 @@ To understand the theory and how to configure `daligner` see
 [this blog post](https://dazzlerblog.wordpress.com/2014/07/10/dalign-fast-and-sensitive-detection-of-all-pairwise-local-alignments/)
 and this [command reference guide](https://dazzlerblog.wordpress.com/command-guides/daligner-command-reference-guide/).
 
-In general we recommend the following:
+For `daligner`, in general we recommend the following:
 
-e: average correlation rate (average sequence identity)
--0.70 (low quality data) - 0.80 (high quality data)
--0.75 or higher for outbred organisms to present haplotype collapse in preassembly
+`-e`: *average correlation rate* (average sequence identity)
 
-l: minimum length of overlap
--1000 (shorter library) - 5000 (longer library)
+`0.70` (low quality data) - `0.80` (high quality data). A higher value will help prevent haplotype collapse.
 
-k: kmer size
--14 (low quality data) - 18 (high quality data)
--lower k has higher sensitivity, uses more storage and memoery, runs slower, better for lower quality data
--higher k has higher specificity, uses less storage and memory, runs faster, better for high quality data
+`-l`: *minimum length of overlap*
+
+`1000` (shorter library) - `5000` (longer library)
+
+`-k`: *kmer size*
+
+`14` (low quality data) - `18` (high quality data)
+
+Lower values of `-k` have higher sensitivity at the tradeoff of increased diskspace, memory consumption and 
+slower run time and tend to work best with lower quality data. In contrast, a larger *kmer* value for `-k` has a 
+higher specificity, uses less system resources and runs faster, but will only be suitable for high quality data.
  
 You can configure basic pre-assembly consensus calling options with the `falcon_sense_option` flag. The `--output-multi`
 flag is necessary for generating proper fasta headers and should not be removed unless your specific use case requires 
@@ -306,15 +321,19 @@ pre-assembly, however no repeat masking is performed and no consensus is
 called. Overlaps are identified and fed into the final assembly. The parameter options work the same 
 way as described above in the pre-assembly section.
 
-Recommendation for preads: 
-e: average correlation rate (average sequence identity)
--0.93 (inbred) - 0.96 (outbred)
+Recommendation for *preads*: 
 
-l: minimum length of overlap
--1800 (poor preassembly, short/low quality library) - 6000 (long, high quality library)
+`-e`: *average correlation rate* (average sequence identity)
 
-k: kmer size
--18 (low quality) - 24 (most cases)
+`0.93` (inbred) - `0.96` (outbred)
+
+`-l`: *minimum length of overlap*
+
+`1800` (poor preassembly, short/low quality library) - `6000` (long, high quality library)
+
+`-k`: kmer size
+
+`18` (low quality) - `24` (most cases)
 
 ### Final Assembly
 
@@ -618,9 +637,10 @@ Preassembly performance is summarized in the file: `0-rawreads/report/pre_assemb
         "seed_reads": 23059
 
 A note on these statistics: in the process of created preads, seeds read bases with insufficient
-raw read coverage (specific by `--min_cov` in `falcon_sense_option`) will cause the read to be split or truncated. The preassembled seed
-fragmentation, truncation, and yield stats summarize the quality of pread assembly.
-A good preassembled yield should be greater than 50%. Insufficient coverage or low quality data are common reasons for poor preassembled yield.
+raw read coverage (specific by `--min_cov` in `falcon_sense_option`) will cause the read to be split or truncated. 
+The preassembled seed fragmentation, truncation, and yield stats summarize the quality of pread assembly.
+A good preassembled yield should be greater than 50%. Insufficient coverage or low quality data are common reasons 
+for poor preassembled yield.
 
 
 
@@ -640,7 +660,9 @@ the scope of the FALCON algorithm.
 Associate contig IDs contain the name of their primary contig but the precise location of alignment must 
 be determined with third party tools such as NUCmer. For example, in a FALCON assembly, 000123F-010-01 
 is an associated contig to primary contig 000123F. In a FALCON-Unzip assembly, 000123F_001 is a haplotig 
-of primary contig 000123F. The alignment position can be found in a [PAF](https://github.com/lh3/miniasm/blob/master/PAF.md) file: `3-unzip/all_h_ctg.paf`.  The alignment coordinates after polishing is not yet produced but can be generated through alignments.
+of primary contig 000123F. The alignment position can be found in a 
+[PAF](https://github.com/lh3/miniasm/blob/master/PAF.md) file: `3-unzip/all_h_ctg.paf`.  The alignment 
+coordinates after polishing is not yet produced but can be generated through alignments.
 
 
 
@@ -652,4 +674,9 @@ Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic for thei
 + HGAP [Chin et al. (2013) Nature Methods 10:563-9](https://www.ncbi.nlm.nih.gov/pubmed/23644548)
 
 # Disclaimer
-THIS WEBSITE AND CONTENT AND ALL SITE-RELATED SERVICES, INCLUDING ANY DATA, ARE PROVIDED "AS IS," WITH ALL FAULTS, WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ANY WARRANTIES OF MERCHANTABILITY, SATISFACTORY QUALITY, NON-INFRINGEMENT OR FITNESS FOR A PARTICULAR PURPOSE. YOU ASSUME TOTAL RESPONSIBILITY AND RISK FOR YOUR USE OF THIS SITE, ALL SITE-RELATED SERVICES, AND ANY THIRD PARTY WEBSITES OR APPLICATIONS. NO ORAL OR WRITTEN INFORMATION OR ADVICE SHALL CREATE A WARRANTY OF ANY KIND. ANY REFERENCES TO SPECIFIC PRODUCTS OR SERVICES ON THE WEBSITES DO NOT CONSTITUTE OR IMPLY A RECOMMENDATION OR ENDORSEMENT BY PACIFIC BIOSCIENCES.
+THIS WEBSITE AND CONTENT AND ALL SITE-RELATED SERVICES, INCLUDING ANY DATA, ARE PROVIDED "AS IS," WITH ALL FAULTS, 
+WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ANY 
+WARRANTIES OF MERCHANTABILITY, SATISFACTORY QUALITY, NON-INFRINGEMENT OR FITNESS FOR A PARTICULAR PURPOSE. YOU ASSUME 
+TOTAL RESPONSIBILITY AND RISK FOR YOUR USE OF THIS SITE, ALL SITE-RELATED SERVICES, AND ANY THIRD PARTY WEBSITES OR 
+APPLICATIONS. NO ORAL OR WRITTEN INFORMATION OR ADVICE SHALL CREATE A WARRANTY OF ANY KIND. ANY REFERENCES TO SPECIFIC 
+PRODUCTS OR SERVICES ON THE WEBSITES DO NOT CONSTITUTE OR IMPLY A RECOMMENDATION OR ENDORSEMENT BY PACIFIC BIOSCIENCES.
