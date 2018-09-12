@@ -398,19 +398,21 @@ NPROC=4
 MB=49152
 njobs=240
 ```
+
+Default job configuration options are specified in the `[job.defaults]` section of your config file. The first option
+you should set that controls the flow of your job is the process watcher, `pwatcher_type`. There two possible values 
+you can set, either `blocking` or `fs_based`. `fs_based` is the default and relies on the pipeline polling the file 
+system periodically to determine whether a `sentinel` file has appeared that would  signal the pipeline to continue. 
+The other option is to use a `blocking` process watcher which can help with systems that have issues with filesystem 
+latency. In this case, the end of the job is determined by the finishing of the system call, rather than by file 
+system polling.
  
-Default job configuration options are specified in the `[job.defaults]` section of your config file. The first 
-option you should set is for the `job_type`. Allowed values are `sge`, `pbs`, `torque`, `slurm`, `lsf` and `local`. 
+The next most important option is the `job_type`. Allowed values are `sge`, `pbs`, `torque`, `slurm`, `lsf` and `local`. 
 If running on a cluster, you need to configure the `submit` string to work with your job scheduler. The `submit`
 string in the sample above is a tested and working SGE submit string. If you are running in `local` mode on a 
 single machine, the submit string should be something like  `submit=bash -C ${CMD} >| ${STDOUT_FILE} 2>| ${STDERR_FILE}`.
-
-Next, you need to tell FALCON how to deal with pipeline flow control by setting your process watcher `pwatcher_type`. 
-There two possible values you can set, either `blocking` or `fs_based`. `fs_based` is the default and relies on
-the pipeline polling the file system periodically to determine whether a `sentinel` file has appeared that would 
-signal the pipeline to continue. The other option is to use a `blocking` process watcher which can help with 
-systems that have issues with filesystem latency. In this case, the end of the job is determined by the finishing 
-of the system call, rather than by file system polling.
+For further information about how to configure for job schedulers other than SGE (PBS/LSF/Slurm/hermit) see the 
+[pypeflow wiki](https://github.com/PacificBiosciences/pypeFLOW/wiki/configuration)
 
 Next you will find your job distribution settings. You will find settings for your default job queue `JOB_QUEUE`, 
 memory allocated per job `MB`, number of processors per job `NPROC` as well as number of concurrently running 
@@ -423,6 +425,7 @@ to the pread consensus calling stage. `pda` and `pla` refer to the pread daligne
 LAshow/LAsort stages respectively while `asm` refers to the final assembly. If you omit a specific `[job.step.*]` 
 section, the `[job.defaults]` will be applied. `[job.step.da]`, `[job.step.la]`, `[job.step.cns]`, `[job.step.pda]`, 
 `[job.step.pla]`, and `[job.step.asm]` are the available sections.
+ 
  
 ## FALCON-Unzip Configuration
 
