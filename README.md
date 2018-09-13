@@ -49,7 +49,7 @@ run:
 
 + FALCON assembly pipeline
 + FALCON-Unzip to phase the genome and perform phased-polishing with Arrow
-+ FALCON-Phase to extend phasing between unzipped haplotig block (need HiC data)
++ FALCON-Phase to extend phasing between unzipped haplotig blocks (need HiC data)
 
 
 Installed package recipes include:
@@ -72,6 +72,10 @@ associated with a homologous genomic region on an p-contig.
 FALCON-Unzip is a true diploid assembler. It takes the contigs from FALCON and phases the reads 
 based on heterozygous SNPs identified in the initial assembly. It then produces a set of partially-phased primary 
 contigs and fully-phased haplotigs which represent divergent haplotypes.
+
+## FALCON-Phase
+This method maps HiC data to the FALCON-Unzip assembly to fix phase switches between haplotigs within primary contigs. 
+Read the [preprint](http://biorxiv.org/cgi/content/short/327064v1) and [manual](https://github.com/phasegenomics/FALCON-Phase/blob/master/README.md). A stand-alone version 1 of the [software](https://github.com/phasegenomics/FALCON-Phase) is available through our co-developer, Phase Genomics. Version 2 is being integrated into bioconda and is still undergoing testing!
 
 ## Hierarchical Genome Assembly Process (aka non-hybrid PacBio assembly)
 The hierarchical genome assembly process proceeds in two rounds. The first round involves
