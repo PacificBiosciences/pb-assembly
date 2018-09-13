@@ -45,8 +45,12 @@ If you are looking for a GUI based long read *de novo* genome assembler, you are
 # Scope
 
 _pb-assembly_ is the bioconda recipe encompassing all code and dependencies necessary to
-run the FALCON assembly pipeline, subsequent extended phasing of a genome with FALCON-Unzip
-and polishing with Arrow.
+run:
+
++ FALCON assembly pipeline
++ FALCON-Unzip to phase the genome and perform phased-polishing with Arrow
++ FALCON-Phase to extend phasing between unzipped haplotig block (need HiC data)
+
 
 Installed package recipes include:
 
