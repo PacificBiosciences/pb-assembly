@@ -49,7 +49,7 @@ run:
 
 + FALCON assembly pipeline
 + FALCON-Unzip to phase the genome and perform phased-polishing with Arrow
-+ FALCON-Phase to extend phasing between unzipped haplotig blocks (need HiC data)
++ FALCON-Phase to extend phasing between unzipped haplotig blocks (requires HiC data)
 
 
 Installed package recipes include:
@@ -153,6 +153,11 @@ fc_run fc_run.cfg
 ## Unzip and polish
 ```bash   
 fc_unzip.py fc_unzip.cfg
+```
+
+## Extended phasing with HiC
+```bash   
+fc_phase.py fc_phase.cfg
 ```
 
 # Configuration
