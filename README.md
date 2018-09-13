@@ -78,7 +78,7 @@ This method maps HiC data to the FALCON-Unzip assembly to fix phase switches bet
 Read the [preprint](http://biorxiv.org/cgi/content/short/327064v1) and [manual](https://github.com/phasegenomics/FALCON-Phase/blob/master/README.md). A stand-alone version 1 of the [software](https://github.com/phasegenomics/FALCON-Phase) is available through our co-developer, Phase Genomics. Version 2 is being integrated into bioconda and is still undergoing testing. Use at your own risk!
 
 ## Hierarchical Genome Assembly Process (aka non-hybrid PacBio assembly)
-The hierarchical genome assembly process proceeds in two rounds. The first round involves
+Assembly with PacBio data uses the hierarchical genome assembly process (HGAP). The first round is pre-assembly or error correcction of the long reads. This involves
 the selection of seed reads or the longest reads in the dataset (user-defined `length_cutoff`). All 
 shorter reads are aligned to the seed reads, in order to generate consensus sequences with high accuracy. 
 We refer to these as pre-assembled reads and they can also be thought of as “error corrected” reads. Preassembled 
@@ -106,6 +106,11 @@ Below are examples of alignments between associate and primary contigs from FALC
 primary contigs from FALCON-Unzip.
 
 <h1 align="center"><img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" /></h1>
+
+FALCON-Phase involves processing the FALCON-Unzip contigs into unzipped blocks (haplotigs pairs) and collapsed haplotypes and then
+mappin the HiC data in order to correctly separate the unzipped regions into pahses.
+
+<h1 align="center"><img width="600px" src="img/Fig1_sbk.pdf" alt="FALCON Phase pipeline" /></h1>
 
 # What's New in PB Assembly
 
