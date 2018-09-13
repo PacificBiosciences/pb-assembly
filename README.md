@@ -110,7 +110,7 @@ primary contigs from FALCON-Unzip.
 FALCON-Phase involves processing the FALCON-Unzip contigs into unzipped blocks (haplotigs pairs) and collapsed haplotypes and then
 mappin the HiC data in order to correctly separate the unzipped regions into pahses.
 
-<h1 align="center"><img width="600px" src="img/Fig1_sbk.pdf" alt="FALCON Phase pipeline" /></h1>
+<h1 align="center"><img width="600px" src="img/Fig1_sbk.png" alt="FALCON Phase pipeline" /></h1>
 
 # What's New in PB Assembly
 
