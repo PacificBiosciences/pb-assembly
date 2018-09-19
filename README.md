@@ -64,9 +64,9 @@ Installed package recipes include:
 ## FALCON and FALCON-Unzip
 FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
 Single-Molecule Real-Time (SMRT) sequences. FALCON is a diploid-aware assembler which follows 
-the hierarchical genome assembly process (HGAP) and is optimized for large genome assembly (e.g. 
-non-microbial). FALCON produces a set of primary contigs (p-contigs) as the primary assembly and a 
-set of alternate contigs (a-contigs) which represent divergent allelic variants. Each a-contig is 
+the hierarchical genome assembly process (HGAP) and is optimized for large genome assembly though microbial 
+genomes can also be assembled. FALCON produces a set of primary contigs (p-contigs) as the primary assembly and a 
+set of associate contigs (a-contigs) which represent divergent allelic variants. Each a-contig is 
 associated with a homologous genomic region on an p-contig.
 
 FALCON-Unzip is a true diploid assembler. It takes the contigs from FALCON and phases the reads 
@@ -113,7 +113,7 @@ mappin the HiC data in order to correctly separate the unzipped regions into pah
 
 ## FALCON
 + Repeat Masking
-Integration of Tandem repeat masking (done) and general repeat masking (in progress)
+Integration of Tandem repeat masking (done) and general repeat masking (done)
 
 + **New!** GFA and Placement Files
 -GFA-1 and GFA-2 output for assembly graphs
@@ -135,8 +135,9 @@ Integration of Tandem repeat masking (done) and general repeat masking (in progr
 -haplotig placement (PAF format) generated in 3-unzip stage
 
 + Performance Improvements
--use of minimap2 instead of BLASR for phasing in Unzip reduces time and memory requirements
+-use of minimap2 instead of BLASR for phasing in Unzip significantly reduces runtime 
 -unzipping and polishing now part of single workflow
+-reduced memory requirements
 
 ## FALCON-Phase
 + New integration into pb-assembly pipeline
@@ -180,7 +181,7 @@ The FALCON pipeline has three main steps which occur in distinct directories:
 |`2-asm-falcon`| contig assembly
 
 Many of the tools that comprise 
-the FALCON Assembly pipeline were written by Gene Meyers and are extensively documented at his 
+the FALCON Assembly pipeline were written by Gene Myers and are extensively documented at his 
 [dazzlerblog](http://dazzlerblog.wordpress.com).
 
 Below is a breakdown of the configuration options available to FALCON:
@@ -204,7 +205,7 @@ recommended by Gene Meyer's. If you wish to modify your
 flag `pa_DBdust_option`.
 
 Filtering options for your input data for pre-assembly can also be set with the `pa_fasta_filter_option` flag. 
-The default is `streamed-median` which uses the median-length subread for each 
+The default is `streamed-internal-median` which uses the median-length subread for each 
 [ZMW](https://www.pacb.com/smrt-science/smrt-sequencing/) (sequencing reaction well). Choosing the longest 
 subread can lead to an enrichment in chimeric molecules. Users will rarely need to change this option from the 
 default.
@@ -327,7 +328,7 @@ been broken due to regions of low quality.
 ### Pread overlapping
 
 ```ini
-ovlp_daligner_option=-e.96 -s1000 -h60 -t32
+ovlp_daligner_option=-e.96 -s1000 -h60
 ovlp_HPCdaligner_option=-v -M24 -l500
 ```
 
@@ -424,10 +425,22 @@ system polling.
  
 The next most important option is the `job_type`. Allowed values are `sge`, `pbs`, `torque`, `slurm`, `lsf` and `local`. 
 If running on a cluster, you need to configure the `submit` string to work with your job scheduler. The `submit`
-string in the sample above is a tested and working SGE submit string. If you are running in `local` mode on a 
-single machine, the submit string should be something like  `submit=bash -C ${CMD} >| ${STDOUT_FILE} 2>| ${STDERR_FILE}`.
+string in the sample above is a tested and working SGE submit string. 
+
+Some example `job_type` configurations and `submit` string are listed for convenience in the following table. 
+You may need to modify some of the parameters to work with your job scheduler.
+
+|job_type| submit
+|--------|-------
+|`local`   | <code>bash -C ${CMD} >&#124; ${STDOUT_FILE} 2>&#124; ${STDERR_FILE}</code>
+|`sge` | <code>qsub -S /bin/bash -sync y -V -q myqueue<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-N ${JOB_NAME} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-o "${JOB_STDOUT}" \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-e "${JOB_STDERR}" \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-pe smp ${NPROC} \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -l h_vmem=${MB}M \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "${JOB_SCRIPT}"
+|`lsf` | <code>qsub -K -q myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} ${JOB_SCRIPT}</code>
+|`slurm` | <code>srun --wait=0 -p myqueue \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -J ${JOB_NAME} \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-o ${JOB_STDOUT} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-e ${JOB_STDERR} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--mem-per-cpu=${MB}M \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--cpus-per-task=${NPROC} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${JOB_SCRIPT}
+
 For further information about how to configure for job schedulers other than SGE (PBS/LSF/Slurm/hermit) see the 
 [pypeflow wiki](https://github.com/PacificBiosciences/pypeFLOW/wiki/configuration)
+
+
 
 Next you will find your job distribution settings. You will find settings for your default job queue `JOB_QUEUE`, 
 memory allocated per job `MB`, number of processors per job `NPROC` as well as number of concurrently running 
