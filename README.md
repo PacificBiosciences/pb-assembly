@@ -162,7 +162,7 @@ fc_unzip.py fc_unzip.cfg
 
 ## Extended phasing with HiC
 ```bash   
-fc_phase.py fc_phase.cfg
+falcon_phase.py fc_phase.cfg
 ```
 
 # Configuration
@@ -508,6 +508,7 @@ If everything was installed properly the test case will exit cleanly and you sho
 size greater than 0 in the `4-quiver/cns-output` directory.
 
 
+We have also made a larger [dataset](https://downloads.pacbcloud.com/public/dataset/assembly_test_data/) available that can be used to run the complete pipeline: FALCON, FALCON-Unzip and FALCON-Phase. The data link contains PacBio reads in BAM and FASTA format for assembly and unzipping, HiC reads for extended phasing, config files for each step of the pipeline, and output files to assess your results.
 
 
 # FAQ
