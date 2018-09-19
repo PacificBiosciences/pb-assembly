@@ -61,7 +61,7 @@ def main():
     if os.path.isdir(args.asm_dir):
         fasta = os.path.join(args.asm_dir, 'p_ctg.fa')
     else:
-        if args.asm_dir.endswith(('.fa', '.fasta*')):
+        if args.asm_dir.endswith(('.fa', '.fasta')):
             fasta = args.asm_dir
 
     fasta_stats = get_fasta_stats(fasta)
