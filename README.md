@@ -433,9 +433,9 @@ You may need to modify some of the parameters to work with your job scheduler.
 |job_type| submit
 |--------|-------
 |`local`   | <code>bash -C ${CMD} >&#124; ${STDOUT_FILE} 2>&#124; ${STDERR_FILE}</code>
-|`sge` | <code>qsub -S /bin/bash -sync y -V -q myqueue<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-N ${JOB_NAME} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-o "${JOB_STDOUT}" \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-e "${JOB_STDERR}" \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-pe smp ${NPROC} \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -l h_vmem=${MB}M \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; "${JOB_SCRIPT}"
+|`sge` | <code>qsub -S /bin/bash -sync y -V -q myqueue -N ${JOB_NAME} -o "${JOB_STDOUT}" -e "${JOB_STDERR}" -pe smp ${NPROC} -l h_vmem=${MB}M "${JOB_SCRIPT}"
 |`lsf` | <code>qsub -K -q myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} ${JOB_SCRIPT}</code>
-|`slurm` | <code>srun --wait=0 -p myqueue \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; -J ${JOB_NAME} \ <br> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-o ${JOB_STDOUT} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;-e ${JOB_STDERR} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--mem-per-cpu=${MB}M \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--cpus-per-task=${NPROC} \ <br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;${JOB_SCRIPT}
+|`slurm` | <code>srun --wait=0 -p myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} --mem-per-cpu=${MB}M --cpus-per-task=${NPROC} ${JOB_SCRIPT}
 
 For further information about how to configure for job schedulers other than SGE (PBS/LSF/Slurm/hermit) see the 
 [pypeflow wiki](https://github.com/PacificBiosciences/pypeFLOW/wiki/configuration)
