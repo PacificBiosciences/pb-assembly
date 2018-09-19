@@ -102,11 +102,6 @@ as a method for extended phasing.
 
 <h1 align="center"><img width="600px" src="img/FALCON_pipeline.png" alt="FALCON pipeline" /></h1>
 
-Below are examples of alignments between associate and primary contigs from FALCON, and haplotigs and 
-primary contigs from FALCON-Unzip.
-
-<h1 align="center"><img width="600px" src="img/dotplots.png" alt="Associate contigs VS Haplotigs" /></h1>
-
 FALCON-Phase involves processing the FALCON-Unzip contigs into unzipped blocks (haplotigs pairs) and collapsed haplotypes and then
 mappin the HiC data in order to correctly separate the unzipped regions into pahses.
 
@@ -454,7 +449,7 @@ FALCON-Unzip has two main steps which occur in distinct directories:
 | Subdirectory | Description          
 |:---------------------|-----------------------------------------------------------------------
 | `3-unzip` | read alignment, SNP calling, read phasing, and diploid assembly of primary contigs and haplotigs                           
-|`4-quiver`| phased polishing in which reads are used to polish in a haplotype-specific manner using BLASR and arrow
+|`4-polish`| phased polishing in which reads are used to polish in a haplotype-specific manner using BLASR and arrow
 
 
 ```ini
@@ -505,7 +500,7 @@ fc_unzip.py fc_unzip.cfg
 ```
 
 If everything was installed properly the test case will exit cleanly and you should find fasta files with a  
-size greater than 0 in the `4-quiver/cns-output` directory.
+size greater than 0 in the `4-polish/cns-output` directory.
 
 
 We have also made a larger [dataset](https://downloads.pacbcloud.com/public/dataset/assembly_test_data/) available that can be used to run the complete pipeline: FALCON, FALCON-Unzip and FALCON-Phase. The data link contains PacBio reads in BAM and FASTA format for assembly and unzipping, HiC reads for extended phasing, config files for each step of the pipeline, and output files to assess your results.
