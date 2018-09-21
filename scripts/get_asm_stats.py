@@ -70,7 +70,7 @@ def main():
 
     fasta_stats = get_fasta_stats(fasta)
     with open(outfile, 'w') as outfile:
-        json.dump(fasta_stats, outfile)
+        json.dump(fasta_stats, outfile, indent=1)
   
     print json.dumps(fasta_stats, indent=1)
 
