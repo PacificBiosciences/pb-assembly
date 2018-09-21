@@ -60,14 +60,19 @@ def main():
 
     if os.path.isdir(args.asm_dir):
         fasta = os.path.join(args.asm_dir, 'p_ctg.fa')
+        outfile = os.path.join(args.asm_dir, 'asm_stats.json')
     else:
         if args.asm_dir.endswith(('.fa', '.fasta')):
             fasta = args.asm_dir
+            outfile = os.path.join(os.path.dirname(fasta), 'asm_stats.json')
+        else:
+            print "Please specify a fasta or a 2-asm-falcon dir!"
 
     fasta_stats = get_fasta_stats(fasta)
-
-    with open("asm_stats.json", 'w') as outfile:
+    with open(outfile, 'w') as outfile:
         json.dump(fasta_stats, outfile)
+  
+    print json.dumps(fasta_stats, indent=1)
 
 
 def get_parser():
@@ -78,6 +83,8 @@ def get_parser():
                         help="Print debug logging to stdout")
     parser.add_argument('asm_dir', type=str, default='./',
                         help="path to 2-asm-falcon directory or fasta file")
+    parser.add_argument('--output', type=str, default='./',
+                        help="output directory")
 
     return parser
 
