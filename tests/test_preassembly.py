@@ -8,7 +8,7 @@ from utils import load_results
 class TestPreassemblyJson(unittest.TestCase):
    
     def setUp(self):
-         """dummy pass"""
+        """dummy pass"""
         benchmark_json = "ecoli/benchmark/pre_assembly_stats.json"
         result_json = "ecoli/benchmark/pre_assembly_stats.json"
         self.benchmark = load_results(benchmark_json)
