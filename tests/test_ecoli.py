@@ -1,5 +1,6 @@
 #!/usr/bin/env
 import unittest
+
 from utils import load_results
 import test_asm
 import test_preassembly

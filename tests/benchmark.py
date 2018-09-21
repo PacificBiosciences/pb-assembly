@@ -7,13 +7,15 @@ import argparse
 import falcon_kit
 import falcon_unzip
 
+
 def main():
     """Set benchmark data"""
     parser = get_parser()
     args = parser.parse_args()
 
     absolute_path = os.path.abspath(args.asm_dir)
-    version_slug = "falcon_kit-{f}-falcon_unzip-{u}".format(f=falcon_kit.__version__, u=falcon_unzip.__version__)
+    version_slug = "falcon_kit-{f}-falcon_unzip-{u}".format(
+        f=falcon_kit.__version__, u=falcon_unzip.__version__)
     benchmark_dir = os.path.join(absolute_path, 'benchmark')
 
     if not os.path.exists(benchmark_dir):
@@ -54,7 +56,7 @@ def get_parser():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('asm_dir', type=str, default='./',
-                        help="path to 2-asm-falcon directory or fasta file")
+                        help="path to a completed FALCON job")
 
     return parser
 

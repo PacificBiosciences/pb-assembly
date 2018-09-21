@@ -9,8 +9,9 @@ from utils import load_results
 class TestAssemblyJson(unittest.TestCase):
    
     def setUp(self):
-        benchmark_json = "yeast/benchmark/asm_stats_bad.json"
-        result_json = "yeast/2-asm-falcon/asm_stats.json"
+        """dummy pass"""
+        benchmark_json = "ecoli/benchmark/asm_stats.json"
+        result_json = "ecoli/benchmark/asm_stats.json"
         self.benchmark = load_results(benchmark_json)
         self.result = load_results(result_json)
         

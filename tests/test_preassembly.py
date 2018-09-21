@@ -7,12 +7,11 @@ from utils import load_results
 
 class TestPreassemblyJson(unittest.TestCase):
    
-    #BENCK = "~/sandbox/falcon/FALCON-examples/run/greg200k/0-rawreads/report/pre_assembly_stats.json"
-    benchmark_json = "yeast/benchmark/pre_assembly_stats.json"
-    result_json = "yeast/benchmark/pre_assembly_stats.json"
-    benchmark = load_results(benchmark_json)
-    result = load_results(result_json)
-
+    def setUp(self):
+        benchmark_json = "ecoli/benchmark/pre_assembly_stats.json"
+        result_json = "ecoli/benchmark/pre_assembly_stats.json"
+        self.benchmark = load_results(benchmark_json)
+        self.result = load_results(result_json)
 
     def test_genome_length(self):
         self.assertEqual(self.benchmark['genome_length'], self.result['genome_length'])
