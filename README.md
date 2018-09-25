@@ -535,7 +535,7 @@ genome size. `Unique molecular coverage` or `physical coverage` is the number of
 
 In general, we recommend:
 
-+ 30-50X `unique molecular coverage` _per haplotye_
++ 30-50X `unique molecular coverage` _per haplotye_ for assembly
 
 + 50-80X `sequencing coverage` per haplotype for polishing
 
