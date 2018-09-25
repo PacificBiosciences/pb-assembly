@@ -527,16 +527,19 @@ https://github.com/PacificBiosciences/pbbioconda/issues
 
 Please use this handy [bug report template](https://github.com/PacificBiosciences/pbbioconda/issues/new?template=bug_report.md).
 
-#### What coverage do I need for de novo assembly and polishing
+
+#### What coverage do I need for _de novo_ assembly and polishing?
 
 When planning for a project, you should consider two types of coverage: `sequence coverage` is the total bases generated divided by the 
-genome size. `Unique molecular coverage` or `physical coverage` are the number _unique_ bases generated divided by the genome size. PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length and the length of the insert. For de novo genome assembly, we recommend selecting only a single subread per reaction well. This reduces the rate of chimerism/misassembly in the resulting contigs. However, we recommend using _all_ subreads when polishing your contigs in order to get the highest base quality.
+genome size. `Unique molecular coverage` or `physical coverage` are the number _unique_ bases divided by the genome size. PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length and the length of the insert. For _de novo_ genome assembly, we recommend selecting only a single subread per reaction well. This reduces the rate of chimerism/misassembly in the resulting contigs. However, we recommend using _all_ subreads when polishing your contigs in order to get the highest base qualities.
 
-In general, for assembly we recommend 30-50X `unique molecular coverage` _per haplotye_. Coverage scales linearly for highly heterozygous diploids or polyploids.
+In general, for assembly we recommend
 
-For polishing, we recommend 50-80X `sequencing coverage` per haplotype.
++ 30-50X `unique molecular coverage` _per haplotye_
 
-Users may increase their sequencing coverage by running longer movies _without using any additional library material_.
++ 50-80X `sequencing coverage` per haplotype for polishing
+
+Coverage scales linearly for highly heterozygous diploids or polyploids. Users may increase their sequencing coverage by running longer movies _without using any additional library material_!
 
 
 #### Can I start from corrected reads?
