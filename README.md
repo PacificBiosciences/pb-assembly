@@ -533,7 +533,7 @@ Please use this handy [bug report template](https://github.com/PacificBioscience
 When planning for a project, you should consider two types of coverage: `Sequence coverage` is the total bases generated divided by the 
 genome size. `Unique molecular coverage` or `physical coverage` is the number of _unique_ bases divided by the genome size. PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length and the length of the insert. For _de novo_ genome assembly, we recommend selecting only a single subread per reaction well. This reduces the rate of chimerism/misassembly in the resulting contigs. However, we recommend using _all_ subreads when polishing your contigs in order to get the highest base qualities.
 
-In general, for assembly we recommend
+In general, we recommend:
 
 + 30-50X `unique molecular coverage` _per haplotye_
 
