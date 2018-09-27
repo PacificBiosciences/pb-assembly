@@ -539,7 +539,7 @@ In general, we recommend:
 
 + 50-80X `sequencing coverage` per haplotype for polishing
 
-Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage recommend above, while a homozygous tetraploid may also require double coverage (in a case where haplotypes are identical, but homeologs are not). Users may increase their sequencing coverage by running longer movies _without using any additional library material_!
+Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage recommend above, while a homozygous tetraploid may also require double coverage (in a case where haplotypes are identical, but homeologs are not).
 
 
 #### Can I start from corrected reads?
