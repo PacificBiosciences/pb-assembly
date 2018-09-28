@@ -434,7 +434,7 @@ You may need to modify some of the parameters to work with your job scheduler.
 |--------|-------
 |`local`   | <code>bash -C ${CMD} >&#124; ${STDOUT_FILE} 2>&#124; ${STDERR_FILE}</code>
 |`sge` | <code>qsub -S /bin/bash -sync y -V -q myqueue -N ${JOB_NAME} -o "${JOB_STDOUT}" -e "${JOB_STDERR}" -pe smp ${NPROC} -l h_vmem=${MB}M "${JOB_SCRIPT}"
-|`lsf` | <code>qsub -K -q myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} ${JOB_SCRIPT}</code>
+|`lsf` | <code>bsub -K -q myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} ${JOB_SCRIPT}</code>
 |`slurm` | <code>srun --wait=0 -p myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} --mem-per-cpu=${MB}M --cpus-per-task=${NPROC} ${JOB_SCRIPT}
 
 For further information about how to configure for job schedulers other than SGE (PBS/LSF/Slurm/hermit) see the 
