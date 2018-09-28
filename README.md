@@ -528,8 +528,6 @@ https://github.com/PacificBiosciences/pbbioconda/issues
 Please use this handy [bug report template](https://github.com/PacificBiosciences/pbbioconda/issues/new?template=bug_report.md).
 
 
-<<<<<<< HEAD
-=======
 #### What coverage do I need for _de novo_ assembly and polishing?
 
 When planning for a project, you should consider two types of coverage: `Sequence coverage` is the total bases generated divided by the 
@@ -544,7 +542,6 @@ In general, we recommend:
 Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage recommend above, while a homozygous tetraploid may also require double coverage (in a case where haplotypes are identical, but homeologs are not).
 
 
->>>>>>> master
 #### Can I start from corrected reads?
 
 Yes. The option `input_type` can be set to either `raw` or `preads`. In the case of the latter,
