@@ -432,7 +432,7 @@ You may need to modify some of the parameters to work with your job scheduler.
 
 |job_type| submit
 |--------|-------
-|`local`   | <code>bash -C ${CMD} >&#124; ${STDOUT_FILE} 2>&#124; ${STDERR_FILE}</code>
+|`local`   | <code>bash -c "${JOB_SCRIPT}" >&#124; "${JOB_STDOUT}" 2>&#124; "${JOB_STDERR}"</code>
 |`sge` | <code>qsub -S /bin/bash -sync y -V -q myqueue -N ${JOB_NAME} -o "${JOB_STDOUT}" -e "${JOB_STDERR}" -pe smp ${NPROC} -l h_vmem=${MB}M "${JOB_SCRIPT}"
 |`lsf` | <code>bsub -K -q myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} ${JOB_SCRIPT}</code>
 |`slurm` | <code>srun --wait=0 -p myqueue -J ${JOB_NAME} -o ${JOB_STDOUT} -e ${JOB_STDERR} --mem-per-cpu=${MB}M --cpus-per-task=${NPROC} ${JOB_SCRIPT}
