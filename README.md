@@ -158,7 +158,7 @@ fc_unzip.py fc_unzip.cfg
 
 ## Extended phasing with HiC
 ```bash   
-falcon_phase.py fc_phase.cfg
+fc_phase.py fc_phase.cfg
 ```
 
 # Configuration
@@ -490,6 +490,13 @@ Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to
 Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only difference
 are the job specific settings specific to FALCON-Unzip. Available sections are `[job.step.unzip_track_reads]`, 
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
+
+## FALCON_Phase configuration
+
+An example [fc_phase.cfg](cfgs/fc_phase.cfg).
+
+*stay tuned for better documentation on falcon phase*
+
 
 # Example Data Set
 
