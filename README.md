@@ -109,6 +109,7 @@ mappin the HiC data in order to correctly separate the unzipped regions into pah
 
 <h1 align="center"><img width="600px" src="img/Fig1_sbk.png" alt="FALCON Phase pipeline" /></h1>
 
+<a name="whats-new-in-pb-assembly"></a>
 # What's New in PB Assembly
 
 **(September 2018)**
@@ -144,7 +145,7 @@ Integration of Tandem repeat masking (done) and general repeat masking (done)
 ## FALCON-Phase
 + New integration into pb-assembly pipeline
 
-
+<a name="usage"></a>
 # Usage
 
 ## Assemble
@@ -163,6 +164,7 @@ fc_unzip.py fc_unzip.cfg
 fc_phase.py fc_phase.cfg
 ```
 
+<a name="configuration"></a>
 # Configuration
 
 Both FALCON and FALCON-Unzip take a config file as their only input parameter.
@@ -527,7 +529,7 @@ size greater than 0 in the `4-polish/cns-output` directory.
 
 We have also made a larger [dataset](https://downloads.pacbcloud.com/public/dataset/assembly_test_data/) available that can be used to run the complete pipeline: FALCON, FALCON-Unzip and FALCON-Phase. The data link contains PacBio reads in BAM and FASTA format for assembly and unzipping, HiC reads for extended phasing, config files for each step of the pipeline, and output files to assess your results.
 
-
+<a name="faq"></a>
 # FAQ
 
 #### Where can I report issues / bugs / feature requests?
@@ -720,14 +722,16 @@ of primary contig 000123F. The alignment position can be found in a
 coordinates after polishing is not yet produced but can be generated through alignments.
 
 
-
+<a name="acknowledgements"></a>
 # Acknowledgements
 Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic for their numerous improvements.
 
+<a name="citations"></a>
 # Citations
 + FALCON/FALCON-Unzip [Chin et al. (2016) Nature Methods 13:1050–1054](https://www.ncbi.nlm.nih.gov/pubmed/27749838)
 + HGAP [Chin et al. (2013) Nature Methods 10:563-9](https://www.ncbi.nlm.nih.gov/pubmed/23644548)
 
+<a name="disclaimer"></a>
 # Disclaimer
 THIS WEBSITE AND CONTENT AND ALL SITE-RELATED SERVICES, INCLUDING ANY DATA, ARE PROVIDED "AS IS," WITH ALL FAULTS, 
 WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ANY 
