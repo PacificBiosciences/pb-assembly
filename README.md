@@ -4,7 +4,7 @@
 </p>
 
 ***
-+ [**Availability**](#availability)
++ [**Availability**](#markdown-header-availability)
 + [**Scope**](#scope)
 + [**General Overview**](#general-overview)
 + [**What's New in PB Assembly**](#whats-new-in-pb-assembly)
@@ -17,7 +17,6 @@
 + [**Disclaimer**](#disclaimer)
 
 
-<a name="Availability"></a>
 # Availability
 
 The latest pre-release, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
