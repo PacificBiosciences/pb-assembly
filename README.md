@@ -4,8 +4,8 @@
 </p>
 
 ***
-+ [**Availability**](#markdown-header-availability)
-+ [**Scope**](#markdown-header-scope)
++ [**Availability**](#availability)
++ [**Scope**](#scope)
 + [**General Overview**](#general-overview)
 + [**What's New in PB Assembly**](#whats-new-in-pb-assembly)
 + [**Usage**](#usage)
@@ -16,7 +16,7 @@
 + [**Citations**](#citations)
 + [**Disclaimer**](#disclaimer)
 
-
+<a name="availability"></a>
 # Availability
 
 The latest pre-release, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
@@ -42,6 +42,7 @@ GitHub issues can be filed [here](https://github.com/PacificBiosciences/pbbiocon
 If you are looking for a GUI based long read *de novo* genome assembler, you are urged to learn about 
 [HGAP4](https://www.pacb.com/videos/tutorial-hgap4-de-novo-assembly-application/)
 
+<a name="scope"></a>
 # Scope
 
 _pb-assembly_ is the bioconda recipe encompassing all code and dependencies necessary to
@@ -58,9 +59,9 @@ Installed package recipes include:
     - pb-dazzler
     - genomicconsensus
     - etc (all other dependencies)
-    
+
+<a name="general-overview"></a>    
 # General Overview
-<a name="general-overview"></a>
 
 ## FALCON and FALCON-Unzip
 FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
