@@ -17,6 +17,7 @@
 + [**Disclaimer**](#disclaimer)
 
 
+<a name="Availability"></a>
 # Availability
 
 The latest pre-release, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
