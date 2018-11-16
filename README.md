@@ -5,7 +5,7 @@
 
 ***
 + [**Availability**](#markdown-header-availability)
-+ [**Scope**](#scope)
++ [**Scope**](#markdown-header-scope)
 + [**General Overview**](#general-overview)
 + [**What's New in PB Assembly**](#whats-new-in-pb-assembly)
 + [**Usage**](#usage)
@@ -60,6 +60,7 @@ Installed package recipes include:
     - etc (all other dependencies)
     
 # General Overview
+<a name="general-overview"></a>
 
 ## FALCON and FALCON-Unzip
 FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
