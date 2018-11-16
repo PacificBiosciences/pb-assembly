@@ -501,7 +501,7 @@ An example [fc_phase.cfg](cfgs/fc_phase.cfg).
 
 *stay tuned for better documentation on falcon phase*
 
-
+<a name="example-data-set"></a>
 # Example Data Set
 
 To test your installation above you can download and run this small 200kb test case. 
@@ -525,6 +525,47 @@ fc_unzip.py fc_unzip.cfg
 
 If everything was installed properly the test case will exit cleanly and you should find fasta files with a  
 size greater than 0 in the `4-polish/cns-output` directory.
+
+
+<a name="tutorial"></a>
+# Tutorial
+
+In this section we will run the full pb-assembly pipeline, ``FALCON``, ``FALCON-Unzip``, and ``FALCON-Phase`` 
+on a test dataset. The data is subsampled from the F1 bull from [Koren et al. 2018](https://doi.org/10.1038/nbt.4277); 
+data are available at NCBI BioProject [PRJNA432857](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA432857).
+We will work through the commands and results and give you ideas of how to assess 
+the perfomance of pb-assembly on your dataset so you can modify parameters and trouble-shoot more 
+effectively. This tutorial is a beginners guide to ``FALCON`` but assumes bioinformatics fluency.
+
+Prepare data and directory
+--------------------------
+
+1. Download *F1 bull* dataset
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+The dataset can be download from [here](wget https://downloads.pacbcloud.com/public/dataset/assembly_test_data/)
+and then unpacked. e.g.:
+
+.. code-block:: bash
+
+	$ wget https://downloads.pacbcloud.com/public/dataset/assembly_test_data/F1_bull_test_data.tar.gz
+	$ tar -xvzf F1_bull_test_data.tar.gz  
+
+Inside the ``F1_bull_test_data`` you'll find the following files with md5sums so you can be sure 
+the file transfer is complete.
+
+.. code-block:: bash
+
+00e1c1ad1d33e4cd481747d7efdffcc0  F1_bull_test.subreads.fasta.gz - PacBio subreads for falcon assembly
+6cf93f0d096ddf0ce3017f25c56ff7e4  F1_bull_test.HiC_R2.fastq.gz - HiC data for falcon phase
+ce8f6057e07459bb091ceeca7f6ff04e  F1_bull_test.HiC_R1.fastq.gz - HiC data for falcon phase
+bfb2bffd02a6a3b6781c832dd6cfd19a  phased.1.fasta.gz - full pipeline output, pseudohaplotype phase 0
+509d9825250e3f34a4b44aac8053ed83  phased.0.fasta.gz - full pipeline output, pseudohaplotype phase 1
+446c74b31eee37286c69e850a933a1fe  fc_unzip.cfg - contig file for fc_unzip.py
+976006b5d55b97d10afc15e131ff7a99  fc_phase.cfg - config file for fc_phase.py
+6629b5d6be0a49e81cf8703d9c52732b  fc_run.cfg - contig file for fc_run (falcon)
+81033c7c4ed46fe8b1c89e9d33cc1e84  F1_bull_test.subreads.bam - PacBio subreads for unzip
+
 
 
 We have also made a larger [dataset](https://downloads.pacbcloud.com/public/dataset/assembly_test_data/) available that can be used to run the complete pipeline: FALCON, FALCON-Unzip and FALCON-Phase. The data link contains PacBio reads in BAM and FASTA format for assembly and unzipping, HiC reads for extended phasing, config files for each step of the pipeline, and output files to assess your results.
