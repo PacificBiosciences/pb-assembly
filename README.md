@@ -492,8 +492,8 @@ Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to
 
 ### Job Distribution
 
-Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only difference
-are the job specific settings specific to FALCON-Unzip. Available sections are `[job.step.unzip_track_reads]`, 
+Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only differences
+ are the job specific settings specific to FALCON-Unzip. Available sections are `[job.step.unzip_track_reads]`, 
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
 
 ## FALCON_Phase configuration
@@ -534,16 +534,16 @@ size greater than 0 in the `4-polish/cns-output` directory.
 
 In this section we will run the full pb-assembly pipeline, `FALCON`, `FALCON-Unzip`, and `FALCON-Phase` 
 on a test dataset. The data is subsampled from the F1 bull from [Koren et al. 2018](https://doi.org/10.1038/nbt.4277); 
-data are available at NCBI BioProject [PRJNA432857](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA432857).
+full dataset is available at NCBI BioProject [PRJNA432857](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA432857).
 We will work through the commands and results and give you ideas of how to assess 
 the perfomance of pb-assembly on your dataset so you can modify parameters and trouble-shoot more 
 effectively.
 
 ## Prepare data and directory
 
-1. Download F1 bull dataset
+### 1. Download F1 bull dataset
 
-The dataset can be download from [here](wget https://downloads.pacbcloud.com/public/dataset/assembly_test_data/)
+The dataset can be download [here](https://downloads.pacbcloud.com/public/dataset/assembly_test_data/)
 and then unpacked. e.g.:
 
 ```bash
@@ -551,7 +551,7 @@ $ wget https://downloads.pacbcloud.com/public/dataset/assembly_test_data/F1_bull
 $ tar -xvzf F1_bull_test_data.tar.gz  
 ```
 
-Inside the ``F1_bull_test_data`` you'll find the following files with md5sums so you can be sure 
+Inside the ``F1_bull_test_data/`` directory you'll find the following files with md5sums so you can be sure 
 the file transfer is complete.
 
 ```bash
@@ -566,39 +566,81 @@ bfb2bffd02a6a3b6781c832dd6cfd19a  phased.1.fasta.gz - full pipeline output, pseu
 81033c7c4ed46fe8b1c89e9d33cc1e84  F1_bull_test.subreads.bam - PacBio subreads for unzip
 ```
 
-2. Create FOFN
+### 2. Create FOFN
 
 Next, create two "files-of-file-names", ("fofn") for the PacBio subread data in fasta and bam format.
-You need the subreads.fasta for FALCON and FALCON-Unzip and the subreads.bam for the polishing step
+You need the `subreads.fasta` for FALCON and FALCON-Unzip and the `subreads.bam` for the polishing step
 of FALCON-Unzip.
 
 ```bash
 $ cat subreads.fasta.fofn	
-/path/to/my/job_dir/F1_bull_test_data/F1_bull_test.subreads.fasta
+/path/to/my/data/dir/F1_bull_test.subreads.fasta
 	
 $ cat subreads.bam.fofn
-/path/to/my/job_dir/F1_bull_test_data/F1_bull_test.subreads.bam
+/path/to/my/data/dir/F1_bull_test.subreads.bam
 ```
 
-3. Modify config files
+### 3. Modify config files
 
 You can use the three configuration files, `fc_run.cfg`, `fc_unzip.cfg`, and `fc_phase.cfg`, from the tarball 
 as a starting point but you will need to adjust the resource allocation for your particular compute setup.
 
 
-4. Activate pb-assembly environment
+### 4. Activate pb-assembly environment
 
 ```bash
 source activate my-pbasm-env
 
-(my-pbasm-env) unane@host:/path/to/my/job_dir/$
+(my-pbasm-env) username@host:/path/to/my/job_dir/$
 ```
-See the [Availability](#availability) section for more details.
+See the [Availability](#availability) section for more details about installation and set up from bioconda.
 
+Make sure you are using ``screen`` or ``tmux`` or sending your job to a cluster scheduler so your job persists.
 
 ## Run FALCON
 
+You're good to go!
 
+```bash
+(my-pbasm-env) $ fc_run fc_run.cfg  
+```
+
+FALCON prints a lot to screen to help you monitor your job. I like to run my job in the background and capture
+both stderr and stdout for later trouble shooting, if needed. I find that not all useful information is captured in the ``all.log`` file.
+
+```bash
+(my-pbasm-env) $ fc_run fc_run.cfg &> run0.log &
+```
+
+### Checking on job progress
+
+#### 1. How many jobs are left?
+
+The majority of run-time is spent in preassembly; this version of FALCON relies on daligner for subread overlapping.
+
+For example, to see how many daligner jobs there are:
+
+```bash
+$ ls 0-rawreads/daligner-chunks/ | wc -l
+9
+```
+
+To see how many jobs have completed, count the sentinal files in the daligner-run dirs.
+
+```bash
+$ find 0-rawreads/daligner-runs/j_*/uow-00 -name "daligner.done" | wc -l
+9
+```
+
+#### 2. What step is running?
+
+It is also help
+
+### Read Stats
+
+### Pre-assembly Performance
+
+### Assembly Performance
 
 
 
