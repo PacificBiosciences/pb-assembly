@@ -539,6 +539,7 @@ We will work through the commands and results and give you ideas of how to asses
 the perfomance of pb-assembly on your dataset so you can modify parameters and trouble-shoot more 
 effectively.
 
+
 ## Prepare data and directory
 
 ### 1. Download F1 bull dataset
@@ -590,23 +591,24 @@ as a starting point but you will need to adjust the resource allocation for your
 
 ```bash
 source activate my-pbasm-env
-
-(my-pbasm-env) username@host:/path/to/my/job_dir/$
+(my-pbasm-env) $
 ```
 See the [Availability](#availability) section for more details about installation and set up from bioconda.
 
 Make sure you are using ``screen`` or ``tmux`` or sending your job to a cluster scheduler so your job persists.
 
+
 ## Run FALCON
 
-You're good to go!
+You're good to go! Let's run it!
 
 ```bash
 (my-pbasm-env) $ fc_run fc_run.cfg  
 ```
 
 FALCON prints a lot to screen to help you monitor your job. I like to run my job in the background and capture
-both stderr and stdout for later trouble shooting, if needed. I find that not all useful information is captured in the ``all.log`` file.
+both stderr and stdout for later trouble shooting, if needed. I find that not all useful information is captured in the ``all.log`` file,
+in particular scheduler/cluster or connectivity errors tend to print to screen.
 
 ```bash
 (my-pbasm-env) $ fc_run fc_run.cfg &> run0.log &
@@ -618,7 +620,7 @@ both stderr and stdout for later trouble shooting, if needed. I find that not al
 
 The majority of run-time is spent in preassembly; this version of FALCON relies on daligner for subread overlapping.
 
-For example, to see how many daligner jobs there are:
+For example, to see how many daligner jobs there are (hint, there are 9 for the test data):
 
 ```bash
 $ ls 0-rawreads/daligner-chunks/ | wc -l
@@ -632,11 +634,103 @@ $ find 0-rawreads/daligner-runs/j_*/uow-00 -name "daligner.done" | wc -l
 9
 ```
 
+Yo, initial overlaps are done!
+
+
 #### 2. What step is running?
 
-It is also help
+It is also helpful to know what stage an individual job is running. On an SGE cluster, for example, I can get at list of my running processes like this:
+
+```bash
+$$ qstat | grep myname
+9580947 1.03953 Pf02af7214 myname  r     11/16/2018 15:12:12 bigmem@mp1306-sge66                8        
+9580952 1.03953 P1f6ce5c60 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
+9580954 1.03953 P941e007f7 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
+9580957 1.03953 Ped31ec762 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
+9580959 1.03953 Pa1c326bb0 myname  r     11/16/2018 15:12:12 bigmem@mp1301-sge66                8        
+```
+
+And I can get details about these processes like this:
+
+```bash
+$ qstat -j 9580947
+```
+
+This command outputs all sorts of useful information like stderr paths and submission times:
+
+```bash
+stdout_path_list:           NONE:NONE:/path/to/my_job_dir/1-preads_ovl/daligner-runs/j_0077/run-Pf02af721455dae.bash.stdout
+submission_time:            Fri Nov 16 15:12:09 2018
+```
 
 ### Read Stats
+
+The first step in FALCON is to build a dazzler database. From the `0-rawreads/build/raw_reads.db` you can easily extract 
+a histogram of read lengths for the subreads used in assembly.
+
+```bash
+(my-pbasm-env) $ DBstats raw_reads.db
+
+Statistics for all reads of length 500 bases or more
+
+        116,757 reads        out of         116,757  (100.0%)
+  1,625,908,631 base pairs   out of   1,625,908,631  (100.0%)
+
+         13,925 average read length
+          8,316 standard deviation
+
+  Base composition: 0.297(A) 0.199(C) 0.212(G) 0.292(T)
+
+  Distribution of Read Lengths (Bin size = 1,000)
+
+        Bin:      Count  % Reads  % Bases     Average
+     68,000:          1      0.0      0.0       68655
+     67,000:          0      0.0      0.0       68655
+     66,000:          0      0.0      0.0       68655
+     65,000:          3      0.0      0.0       66171
+     64,000:          0      0.0      0.0       66171
+     63,000:          0      0.0      0.0       66171
+     62,000:          1      0.0      0.0       65359
+     61,000:          2      0.0      0.0       64282
+     60,000:          0      0.0      0.0       64282
+     59,000:          3      0.0      0.0       62735
+...
+```
+
+You can extract the same information from the preads:
+
+```bash
+(my-pbasm-env) $ DBstats 1-preads_ovl/build/preads.db                     
+
+Statistics for all reads of length 70 bases or more
+
+         39,573 reads        out of          39,573  (100.0%)
+    558,983,583 base pairs   out of     558,983,583  (100.0%)
+
+         14,125 average read length
+          8,124 standard deviation
+
+  Base composition: 0.299(A) 0.200(C) 0.200(G) 0.300(T)
+
+  Distribution of Read Lengths (Bin size = 1,000)
+
+        Bin:      Count  % Reads  % Bases     Average
+     57,000:          2      0.0      0.0       57484
+     56,000:          0      0.0      0.0       57484
+     55,000:          1      0.0      0.0       56712
+     54,000:          0      0.0      0.0       56712
+     53,000:          1      0.0      0.0       55899
+     52,000:          3      0.0      0.1       54468
+     51,000:          4      0.0      0.1       53341
+     50,000:          2      0.0      0.1       52870
+     49,000:          6      0.0      0.2       51819
+     48,000:          4      0.1      0.2       51221
+     47,000:          9      0.1      0.3       50182
+     46,000:          4      0.1      0.3       49768
+     45,000:          9      0.1      0.4       48911
+     44,000:         11      0.1      0.5       48052
+...
+```
 
 ### Pre-assembly Performance
 
