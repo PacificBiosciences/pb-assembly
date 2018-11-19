@@ -812,10 +812,11 @@ align your contigs against a similar reference (if available) using [minimap](ht
 or [mummer](https://github.com/mummer4/mummer/blob/master/MANUAL.md) and visualize with a tool like 
 [dgenies](http://dgenies.toulouse.inra.fr/), [assemblytics](http://assemblytics.com/), 
 or [dot](https://github.com/dnanexus/dot).
-+ Check base level correctnes (after polishing):
++ Check base level correctness (after polishing):
 Use [BUSCO](http://gitlab.com/ezlab/busco/raw/master/BUSCO_v3_userguide.pdf) to look for single copy conserved genes.
 
 
+<a name="polish"></a>
 ### Polishing
 
 Command-line FALCON does not automatically polish the assembly, but you need to do at least 1 round of polishing at this point if you 
@@ -828,13 +829,86 @@ or through the [SMRT Link GUI](https://www.pacb.com/wp-content/uploads/SMRT_Link
 
 ## Run FALCON-Unzip
 
+If your sample in not haploid or an inbred diploid, you should consider running FALCON-Unzip as well, to separately assembly the haplotypes.
+You run FALCON-Unzip in the same directory with a different configuration file. (Here I preserved the all.log file before launching Unzip, which will overwrite it.)  
+
 ```bash
 (my-pbasm-env) $ mv all.log all0.log
 (my-pbasm-env) $ fc_unzip.py fc_unzip.cfg &> run1.std &
 ```
 
+### Haplotype resolution
+
+The first stage of FALCON-Unzip involves calling variants, binning reads by haplotype, then haplotype-specific re-assembly. This occurs in the
+`3-unzip` directory. You can assess the performance of Unzip by running the `get_asm_stats.py` script on the primary and haplotig fasta files:
+
+```bash
+python pb-assembly/scripts/get_asm_stats.py 3-unzip/all_p_ctg.fa 
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6082188, 
+ "asm_max": 7018959, 
+ "asm_mean": 4447277, 
+ "asm_median": 4568005, 
+ "asm_min": 32608, 
+ "asm_n50": 6169539, 
+ "asm_n90": 4568005, 
+ "asm_n95": 4568005, 
+ "asm_total_bp": 17789111
+}
+
+
+python pb-assembly/scripts/get_asm_stats.py 3-unzip/all_h_ctg.fa
+{
+ "asm_contigs": 50, 
+ "asm_esize": 747994, 
+ "asm_max": 1654630, 
+ "asm_mean": 338144, 
+ "asm_median": 169041, 
+ "asm_min": 4675, 
+ "asm_n50": 617201, 
+ "asm_n90": 223476, 
+ "asm_n95": 95301, 
+ "asm_total_bp": 16907217
+}
+```
+
+The assembly stats are largely the same for 3-unzip/all_p_ctg.fa as they were after running FALCON. The stats for the alternate haplotigs (`3-unzip/all_h_ctg.fa`) 
+are typically shorter than the primary contigs and more fragmented. For this test data, 16.9Mb/17.8Mb = 95% of the genome "unzipped" or is haplotype-resolved.
+Samples with lower heterozygosity will have a smaller proportion of the genome unzipped.
+
+A new feature of FALCON-Unzip is the `haplotig placement` file, `3-unzip/all_h_ctg.paf`, which specifies where each alternate haplotig
+aligned to the primary contig in [Pairwise mApping Format](https://github.com/lh3/miniasm/blob/master/PAF.md).
+
+```bash
+$ head 3-unzip/all_h_ctg.paf 
+000002F_001     978968  0       978968  +       000002F 4568005 3132263 4100391 968128  968128  60
+000002F_002     126260  0       126260  +       000002F 4568005 562806  690698  127892  127892  60
+000002F_003     1654630 0       1654630 +       000002F 4568005 692926  2340316 1647390 1647390 60
+000002F_004     266093  0       266093  +       000002F 4568005 2842384 3110211 267827  267827  60
+000002F_005     102771  0       102771  +       000002F 4568005 2722867 2828717 105850  105850  60
+000002F_006     481464  0       481464  +       000002F 4568005 67901   546495  478594  478594  60
+000002F_007     443941  0       443941  +       000002F 4568005 4123628 4568005 444377  444377  60
+000002F_008     357850  0       357850  +       000002F 4568005 2352024 2700428 348404  348404  60
+000003F_001     22390   0       22390   +       000003F 32608   10258   32608   22350   22350   60
+000000F_001     434620  0       434620  +       000000F 7018959 2452537 2885704 433167  433167  60
+```
+
+You can think of the coordinates: `000002F_001:0-978968` and `000002F:3132263-4100391` as a `phase block` containing the two phased haplotypes.
+
+
+### Phased polishing
+
+The second stage of FALCON-Unzip is phased-polishing, which occurs in the `4-polish` directory. This method of polishing preserved the haplotype
+differences by polishing the primary contigs and alternate haplotigs with reads that are binned into the two haplotypes. 
+Some residual indel errors, particularly around homopolymer stretches may remain so consider concatenating your primary contigs and haplotigs 
+into a single reference and polishing with resequening as described [above](#polish).
+
 
 ## Run FALCON-Phase
+
+
+
 
 ```bash
 (my-pbasm-env) $ mv all.log all1.log            
