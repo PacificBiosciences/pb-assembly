@@ -962,8 +962,9 @@ using alignment of haplotig to primary contigs with mummer4. The placement file 
 phase blocks of haplotig and primary contigs sequences. HiC reads are mapped to these minced contigs and based on the density of read pairs
 haplotype phase switch errors are corrected.
 
-Two options for output fasta files are available: `unzip-style` produces primary contig and haplotigs but with the phase switch errors corrected.
-`pseudohapltype` produces two contigs similar to the primary contigs but with the unzipped regions all in phase with each other.
+Two options for output fasta files are available: `unzip` produces primary contig and haplotigs but with the phase switch errors corrected.
+`pseudohap` produces two contigs similar to the primary contigs but with the unzipped regions all in phase with each other. If you want a 
+haploid version of your genome, choose `unzip` style. If you prefer a diploid version of the genome, choose the pseudohaplotype format.
 
 See the haplotig placement file:
 
@@ -981,7 +982,7 @@ $ head 5-phase/placement-output/haplotig.placement
 000000F_015     223906  0       223906  +       000000F 7037049 3259330 3487449 223906  223906  60
 ```
 
-Final output stats in the `pseudohaplotype` format are similar to the primary contigs from FALCON and FALCON-Unzip:
+Final output stats in the `pseudohap` format are similar to the primary contigs from FALCON and FALCON-Unzip:
 
 
 ```bash
