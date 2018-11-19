@@ -585,6 +585,7 @@ $ cat subreads.bam.fofn
 
 You can use the three configuration files, `fc_run.cfg`, `fc_unzip.cfg`, and `fc_phase.cfg`, from the tarball 
 as a starting point but you will need to adjust the resource allocation for your particular compute setup.
+Consult the detailed [Configuration](#configuration) section for more information.
 
 
 ### 4. Activate pb-assembly environment
@@ -666,7 +667,9 @@ submission_time:            Fri Nov 16 15:12:09 2018
 ### Read Stats
 
 The first step in FALCON is to build a dazzler database. From the `0-rawreads/build/raw_reads.db` you can easily extract 
-a histogram of read lengths for the subreads used in assembly.
+a histogram of read lengths for the subreads used in assembly. In addition, the total base pairs can be used to calculate
+raw subread coverage if you know your genome size. You may notice that your base pairs is lower than the total yield of 
+your SMRT cells, particulary if you are using version 3.0 chemistry of sequel. Consult the [FAQ](*what-coverage") section for more details.
 
 ```bash
 (my-pbasm-env) $ DBstats raw_reads.db
@@ -734,7 +737,84 @@ Statistics for all reads of length 70 bases or more
 
 ### Pre-assembly Performance
 
+In addition to the DBstats command, consult the `0-rawreads/report/pre_assembly_stats.json` file for details about
+pre-assembly performance:
+
+```bash
+$ {
+    "genome_length": 20000000,
+    "length_cutoff": 17886, # calculated min length of seed reads when "autocut" (length_cutoff = -1) is used. 
+    "preassembled_bases": 558983583,
+    "preassembled_coverage": 27.949,
+    "preassembled_esize": 18798.024,
+    "preassembled_mean": 14125.378,
+    "preassembled_n50": 18750,
+    "preassembled_p95": 28394,
+    "preassembled_reads": 39573,
+    "preassembled_seed_fragmentation": 1.507, # number split preads / seed reads
+    "preassembled_seed_truncation": 3475.765, # ave bp lost per pread due to low cov
+    "preassembled_yield": 0.699,              # total pread bp / seed read bp (>50% is acceptable)
+    "raw_bases": 1625908631,
+    "raw_coverage": 81.295,
+    "raw_esize": 18892.366,
+    "raw_mean": 13925.577,
+    "raw_n50": 17703,
+    "raw_p95": 30005,
+    "raw_reads": 116757,
+    "seed_bases": 800080383,
+    "seed_coverage": 40.004,
+    "seed_esize": 26357.341,
+    "seed_mean": 24841.045,
+    "seed_n50": 24687,
+    "seed_p95": 36872,
+    "seed_reads": 32208
+}
+```
+
+A note on these statistics: in the process of created preads, seeds reads with insufficient raw read coverage 
+(falcon_sense_option = --min_cov option) will be split or truncated. The preassembled seed fragmentation, truncation, 
+and yield stats summarize the quality of pread assembly. A good preassembled yield should be greater than 50%. Often
+coverage-limited assemblies (<30X coverage) show very poor preassembled yield. 
+
+
 ### Assembly Performance
+
+When your run is complete, you can summarize your assembly stats using the get_asm_stats.py included in the 
+documatation package.
+
+```bash
+$ git clone https://github.com/PacificBiosciences/pb-assembly.git
+$ python pb-assembly/scripts/get_asm_stats.py 2-asm-falcon/p_ctg.fa
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6087779, 
+ "asm_max": 7022361, 
+ "asm_mean": 4455235, 
+ "asm_median": 4601161, 
+ "asm_min": 32628, 
+ "asm_n50": 6164792, 
+ "asm_n90": 4601161, 
+ "asm_n95": 4601161, 
+ "asm_total_bp": 17820942
+}
+```
+
+Check the assembly completeness: is `asm_total_bp` what you expect your genome size to be? And check the contiguity:
+asm_n50 larger than 1Mb is best for downstream scaffolding and annotion effort. You'll need to use third party tools 
+to check for correctness. To assess contig assembly correctness, align your contigs against a similar reference (if available) 
+using [minimap](https://github.com/lh3/minimap2) or [mummer](https://github.com/mummer4/mummer/blob/master/MANUAL.md) and 
+visualize with a tool like [dgenies](http://dgenies.toulouse.inra.fr/), [assemblytics](http://assemblytics.com/), 
+or [dot](https://github.com/dnanexus/dot). To check base level accuracy 
+(after polishing) use [BUSCO](http://gitlab.com/ezlab/busco/raw/master/BUSCO_v3_userguide.pdf).
+
+
+### Polishing
+
+Command-line FALCON does not automatically polish the assembly, but you need to do at least 1 round of polishing at this point if you 
+do not proceed to FALCON-Unzip! Polishing increased base pair accuracy by mapping the PacBio raw data back to the draft assembly
+and then computing the consensus sequence of the aligned reads. Assembly polishing may be run using the resequencing pipeline 
+of pbsmrtpipe (command line instruction available in the [SMRT_Tools_Reference_Guide](https://www.pacb.com/wp-content/uploads/SMRT_Tools_Reference_Guide_v600.pdf)
+or through the [SMRT Link GUI](https://www.pacb.com/wp-content/uploads/SMRT_Link_User_Guide_v600.pdf). Resequencing requires PacBio subread BAM inputs.
 
 
 
@@ -747,7 +827,7 @@ https://github.com/PacificBiosciences/pbbioconda/issues
 
 Please use this handy [bug report template](https://github.com/PacificBiosciences/pbbioconda/issues/new?template=bug_report.md).
 
-
+<a name="what-coverage"></a>
 #### What coverage do I need for _de novo_ assembly and polishing?
 
 When planning for a project, you should consider two types of coverage: `Sequence coverage` is the total bases generated divided by the 
