@@ -11,12 +11,13 @@
 + [**Usage**](#usage)
 + [**Configuration**](#configuration)
 + [**Example Data Set**](#example-data-set)
++ [**Tutorial**](#tutorial)
 + [**FAQ**](#faq)
 + [**Acknowledgements**](#acknowledgements)
 + [**Citations**](#citations)
 + [**Disclaimer**](#disclaimer)
 
-
+<a name="availability"></a>
 # Availability
 
 The latest pre-release, experts-only linux/mac binaries can be installed via [bioconda](https://bioconda.github.io/).
@@ -42,6 +43,7 @@ GitHub issues can be filed [here](https://github.com/PacificBiosciences/pbbiocon
 If you are looking for a GUI based long read *de novo* genome assembler, you are urged to learn about 
 [HGAP4](https://www.pacb.com/videos/tutorial-hgap4-de-novo-assembly-application/)
 
+<a name="scope"></a>
 # Scope
 
 _pb-assembly_ is the bioconda recipe encompassing all code and dependencies necessary to
@@ -58,7 +60,8 @@ Installed package recipes include:
     - pb-dazzler
     - genomicconsensus
     - etc (all other dependencies)
-    
+
+<a name="general-overview"></a>    
 # General Overview
 
 ## FALCON and FALCON-Unzip
@@ -107,6 +110,7 @@ mappin the HiC data in order to correctly separate the unzipped regions into pah
 
 <h1 align="center"><img width="600px" src="img/Fig1_sbk.png" alt="FALCON Phase pipeline" /></h1>
 
+<a name="whats-new-in-pb-assembly"></a>
 # What's New in PB Assembly
 
 **(September 2018)**
@@ -142,7 +146,7 @@ Integration of Tandem repeat masking (done) and general repeat masking (done)
 ## FALCON-Phase
 + New integration into pb-assembly pipeline
 
-
+<a name="usage"></a>
 # Usage
 
 ## Assemble
@@ -158,9 +162,10 @@ fc_unzip.py fc_unzip.cfg
 
 ## Extended phasing with HiC
 ```bash   
-falcon_phase.py fc_phase.cfg
+fc_phase.py fc_phase.cfg
 ```
 
+<a name="configuration"></a>
 # Configuration
 
 Both FALCON and FALCON-Unzip take a config file as their only input parameter.
@@ -487,10 +492,17 @@ Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to
 
 ### Job Distribution
 
-Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only difference
-are the job specific settings specific to FALCON-Unzip. Available sections are `[job.step.unzip_track_reads]`, 
+Configuration of your `[job.defaults]` section is identical to FALCON as described previously. The only differences
+ are the job specific settings specific to FALCON-Unzip. Available sections are `[job.step.unzip_track_reads]`, 
 `[job.step.unzip_blasr_aln]`, `[job.step.unzip.phasing]` and `[job.step.unzip.hasm]`
 
+## FALCON_Phase configuration
+
+An example [fc_phase.cfg](cfgs/fc_phase.cfg).
+
+*stay tuned for better documentation on falcon phase*
+
+<a name="example-data-set"></a>
 # Example Data Set
 
 To test your installation above you can download and run this small 200kb test case. 
@@ -516,9 +528,432 @@ If everything was installed properly the test case will exit cleanly and you sho
 size greater than 0 in the `4-polish/cns-output` directory.
 
 
-We have also made a larger [dataset](https://downloads.pacbcloud.com/public/dataset/assembly_test_data/) available that can be used to run the complete pipeline: FALCON, FALCON-Unzip and FALCON-Phase. The data link contains PacBio reads in BAM and FASTA format for assembly and unzipping, HiC reads for extended phasing, config files for each step of the pipeline, and output files to assess your results.
+
+<a name="tutorial"></a>
+# Tutorial
+
+In this section we will run the full pb-assembly pipeline, `FALCON`, `FALCON-Unzip`, and `FALCON-Phase` 
+on a test dataset. The data is subsampled from the F1 bull from [Koren et al. 2018](https://doi.org/10.1038/nbt.4277); 
+full dataset is available at NCBI BioProject [PRJNA432857](https://www.ncbi.nlm.nih.gov/bioproject/?term=PRJNA432857).
+We will work through the commands and results and give you ideas of how to assess 
+the perfomance of pb-assembly on your dataset so you can modify parameters and trouble-shoot more 
+effectively.
 
 
+## Prepare data and directory
+
+### 1. Download F1 bull dataset
+
+The dataset can be download [here](https://downloads.pacbcloud.com/public/dataset/assembly_test_data/)
+and then unpacked. e.g.:
+
+```bash
+$ wget https://downloads.pacbcloud.com/public/dataset/assembly_test_data/F1_bull_test_data.tar.gz
+$ tar -xvzf F1_bull_test_data.tar.gz  
+```
+
+Inside the ``F1_bull_test_data/`` directory you'll find the following files with md5sums so you can be sure 
+the file transfer is complete.
+
+```bash
+00e1c1ad1d33e4cd481747d7efdffcc0  F1_bull_test.subreads.fasta.gz - PacBio subreads for falcon assembly
+6cf93f0d096ddf0ce3017f25c56ff7e4  F1_bull_test.HiC_R2.fastq.gz - HiC data for falcon phase
+ce8f6057e07459bb091ceeca7f6ff04e  F1_bull_test.HiC_R1.fastq.gz - HiC data for falcon phase
+bfb2bffd02a6a3b6781c832dd6cfd19a  phased.1.fasta.gz - full pipeline output, pseudohaplotype phase 0
+509d9825250e3f34a4b44aac8053ed83  phased.0.fasta.gz - full pipeline output, pseudohaplotype phase 1
+446c74b31eee37286c69e850a933a1fe  fc_unzip.cfg - contig file for fc_unzip.py
+976006b5d55b97d10afc15e131ff7a99  fc_phase.cfg - config file for fc_phase.py
+6629b5d6be0a49e81cf8703d9c52732b  fc_run.cfg - contig file for fc_run (falcon)
+81033c7c4ed46fe8b1c89e9d33cc1e84  F1_bull_test.subreads.bam - PacBio subreads for unzip
+```
+
+### 2. Create FOFN
+
+Next, create two "files-of-file-names", ("fofn") for the PacBio subread data in fasta and bam format.
+You need the `subreads.fasta` for FALCON and FALCON-Unzip and the `subreads.bam` for the polishing step
+of FALCON-Unzip.
+
+```bash
+$ cat subreads.fasta.fofn	
+/path/to/my/data/dir/F1_bull_test.subreads.fasta
+	
+$ cat subreads.bam.fofn
+/path/to/my/data/dir/F1_bull_test.subreads.bam
+```
+
+### 3. Modify config files
+
+You can use the three configuration files, `fc_run.cfg`, `fc_unzip.cfg`, and `fc_phase.cfg`, from the tarball 
+as a starting point but you will need to adjust the resource allocation for your particular compute setup.
+Consult the detailed [Configuration](#configuration) section for more information.
+
+
+### 4. Activate pb-assembly environment
+
+```bash
+source activate my-pbasm-env
+(my-pbasm-env) $
+```
+See the [Availability](#availability) section for more details about installation and set up from bioconda.
+
+Make sure you are using ``screen`` or ``tmux`` or sending your job to a cluster scheduler so your job persists.
+
+
+
+## Run FALCON
+
+You're good to go! Let's run it!
+
+```bash
+(my-pbasm-env) $ fc_run fc_run.cfg  
+```
+
+FALCON prints a lot to screen to help you monitor your job. I like to run my job in the background and capture
+both stderr and stdout for later trouble shooting, if needed. I find that not all useful information is captured in the ``all.log`` file,
+in particular scheduler/cluster or connectivity errors tend to print to screen.
+
+```bash
+(my-pbasm-env) $ fc_run fc_run.cfg &> run0.log &
+```
+
+### Checking on job progress
+
+#### 1. How many jobs are left?
+
+The majority of run-time is spent in preassembly; this version of FALCON relies on daligner for subread overlapping.
+
+For example, to see how many daligner jobs there are (hint, there are 9 for the test data):
+
+```bash
+$ ls 0-rawreads/daligner-chunks/ | wc -l
+9
+```
+
+To see how many jobs have completed, count the sentinal files in the daligner-run dirs.
+
+```bash
+$ find 0-rawreads/daligner-runs/j_*/uow-00 -name "daligner.done" | wc -l
+9
+```
+
+Yo, initial overlaps are done!
+
+
+#### 2. What step is running?
+
+It is also helpful to know what stage an individual job is running. On an SGE cluster, for example, I can get at list of my running processes like this:
+
+```bash
+$ qstat | grep myname
+9580947 1.03953 Pf02af7214 myname  r     11/16/2018 15:12:12 bigmem@mp1306-sge66                8        
+9580952 1.03953 P1f6ce5c60 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
+9580954 1.03953 P941e007f7 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
+9580957 1.03953 Ped31ec762 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
+9580959 1.03953 Pa1c326bb0 myname  r     11/16/2018 15:12:12 bigmem@mp1301-sge66                8        
+```
+
+And I can get details about these processes like this:
+
+```bash
+$ qstat -j 9580947
+```
+
+The above command outputs all sorts of useful information like stderr paths and submission times:
+
+```bash
+...
+stdout_path_list:           NONE:NONE:/path/to/my_job_dir/1-preads_ovl/daligner-runs/j_0077/run-Pf02af721455dae.bash.stdout
+...
+submission_time:            Fri Nov 16 15:12:09 2018
+...
+```
+
+### Read Stats
+
+The first step in FALCON is to build a dazzler database. From the `0-rawreads/build/raw_reads.db` you can easily extract 
+a histogram of read lengths for the subreads used in assembly. In addition, the total base pairs can be used to calculate
+raw subread coverage if you know your genome size. You may notice that the base pairs from the dazzDB is lower than the total yield of 
+your SMRT cells, particulary if you are using version 3.0 chemistry of sequel. Consult the [FAQ](#what-coverage) section for more details.
+
+```bash
+(my-pbasm-env) $ DBstats raw_reads.db
+
+Statistics for all reads of length 500 bases or more
+
+        116,757 reads        out of         116,757  (100.0%)
+  1,625,908,631 base pairs   out of   1,625,908,631  (100.0%)
+
+         13,925 average read length
+          8,316 standard deviation
+
+  Base composition: 0.297(A) 0.199(C) 0.212(G) 0.292(T)
+
+  Distribution of Read Lengths (Bin size = 1,000)
+
+        Bin:      Count  % Reads  % Bases     Average
+     68,000:          1      0.0      0.0       68655
+     67,000:          0      0.0      0.0       68655
+     66,000:          0      0.0      0.0       68655
+     65,000:          3      0.0      0.0       66171
+     64,000:          0      0.0      0.0       66171
+     63,000:          0      0.0      0.0       66171
+     62,000:          1      0.0      0.0       65359
+     61,000:          2      0.0      0.0       64282
+     60,000:          0      0.0      0.0       64282
+     59,000:          3      0.0      0.0       62735
+...
+```
+
+You can extract the same information from the preads:
+
+```bash
+(my-pbasm-env) $ DBstats 1-preads_ovl/build/preads.db                     
+
+Statistics for all reads of length 70 bases or more
+
+         39,573 reads        out of          39,573  (100.0%)
+    558,983,583 base pairs   out of     558,983,583  (100.0%)
+
+         14,125 average read length
+          8,124 standard deviation
+
+  Base composition: 0.299(A) 0.200(C) 0.200(G) 0.300(T)
+
+  Distribution of Read Lengths (Bin size = 1,000)
+
+        Bin:      Count  % Reads  % Bases     Average
+     57,000:          2      0.0      0.0       57484
+     56,000:          0      0.0      0.0       57484
+     55,000:          1      0.0      0.0       56712
+     54,000:          0      0.0      0.0       56712
+     53,000:          1      0.0      0.0       55899
+     52,000:          3      0.0      0.1       54468
+     51,000:          4      0.0      0.1       53341
+     50,000:          2      0.0      0.1       52870
+     49,000:          6      0.0      0.2       51819
+     48,000:          4      0.1      0.2       51221
+     47,000:          9      0.1      0.3       50182
+     46,000:          4      0.1      0.3       49768
+     45,000:          9      0.1      0.4       48911
+     44,000:         11      0.1      0.5       48052
+...
+```
+
+### Pre-assembly Performance
+
+In addition to the DBstats command, consult the `0-rawreads/report/pre_assembly_stats.json` file for details about
+pre-assembly performance:
+
+```bash
+$ {
+    "genome_length": 20000000,
+    "length_cutoff": 17886, # calculated min length of seed reads when "autocut" (length_cutoff = -1) is used. 
+    "preassembled_bases": 558983583,
+    "preassembled_coverage": 27.949,
+    "preassembled_esize": 18798.024,
+    "preassembled_mean": 14125.378,
+    "preassembled_n50": 18750,
+    "preassembled_p95": 28394,
+    "preassembled_reads": 39573,
+    "preassembled_seed_fragmentation": 1.507, # number split preads / seed reads
+    "preassembled_seed_truncation": 3475.765, # ave bp lost per pread due to low cov
+    "preassembled_yield": 0.699,              # total pread bp / seed read bp (>50% is acceptable)
+    "raw_bases": 1625908631,
+    "raw_coverage": 81.295,
+    "raw_esize": 18892.366,
+    "raw_mean": 13925.577,
+    "raw_n50": 17703,
+    "raw_p95": 30005,
+    "raw_reads": 116757,
+    "seed_bases": 800080383,
+    "seed_coverage": 40.004,
+    "seed_esize": 26357.341,
+    "seed_mean": 24841.045,
+    "seed_n50": 24687,
+    "seed_p95": 36872,
+    "seed_reads": 32208
+}
+```
+
+A note on these statistics: in the process of created preads, seeds reads with insufficient raw read coverage 
+(falcon_sense_option = --min_cov option) will be split or truncated. The preassembled seed fragmentation, truncation, 
+and yield stats summarize the quality of pread assembly. A good preassembled yield should be greater than 50%. Often
+coverage-limited assemblies (<30X coverage) show poor preassembled yield. 
+
+
+### Assembly Performance
+
+When your run is complete, you can summarize your assembly stats using the `get_asm_stats.py` included in the 
+documatation package.
+
+```bash
+$ git clone https://github.com/PacificBiosciences/pb-assembly.git
+$ python pb-assembly/scripts/get_asm_stats.py 2-asm-falcon/p_ctg.fa
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6087779, 
+ "asm_max": 7022361, 
+ "asm_mean": 4455235, 
+ "asm_median": 4601161, 
+ "asm_min": 32628, 
+ "asm_n50": 6164792, 
+ "asm_n90": 4601161, 
+ "asm_n95": 4601161, 
+ "asm_total_bp": 17820942
+}
+```
+
++ Check the assembly `completeness`:
+is `asm_total_bp` what you expect your genome size to be?
++ Check the `contiguity`:
+asm_n50 larger than 1Mb is best for downstream scaffolding and annotion effort.
++ Check the `correctness` of the contigs using third party tools:
+align your contigs against a similar reference (if available) using [minimap](https://github.com/lh3/minimap2) 
+or [mummer](https://github.com/mummer4/mummer/blob/master/MANUAL.md) and visualize with a tool like 
+[dgenies](http://dgenies.toulouse.inra.fr/), [assemblytics](http://assemblytics.com/), 
+or [dot](https://github.com/dnanexus/dot).
++ Check base level correctness (after polishing):
+Use [BUSCO](http://gitlab.com/ezlab/busco/raw/master/BUSCO_v3_userguide.pdf) to look for single copy conserved genes.
+
+
+<a name="polish"></a>
+### Polishing
+
+Command-line FALCON does not automatically polish the assembly, but you need to do at least 1 round of polishing at this point if you 
+do not proceed to FALCON-Unzip! Polishing increased base pair accuracy by mapping the PacBio raw data back to the draft assembly
+and then computing the consensus sequence of the aligned reads. Assembly polishing may be run using the resequencing pipeline 
+of pbsmrtpipe (command line instruction available in the [SMRT_Tools_Reference_Guide](https://www.pacb.com/wp-content/uploads/SMRT_Tools_Reference_Guide_v600.pdf)
+or through the [SMRT Link GUI](https://www.pacb.com/wp-content/uploads/SMRT_Link_User_Guide_v600.pdf). Resequencing requires PacBio subread BAM inputs.
+
+
+
+## Run FALCON-Unzip
+
+If your sample in not haploid or an inbred diploid, you should consider running FALCON-Unzip as well, to separately assembly the haplotypes.
+You run FALCON-Unzip in the same directory with a different configuration file. (Here I preserved the all.log file before launching Unzip, which will overwrite it.)  
+
+```bash
+(my-pbasm-env) $ mv all.log all0.log
+(my-pbasm-env) $ fc_unzip.py fc_unzip.cfg &> run1.std &
+```
+
+### Haplotype resolution
+
+The first stage of FALCON-Unzip involves calling variants in the FALCON assembly, binning reads by haplotype, then haplotype-specific re-assembly. This occurs in the
+`3-unzip` directory. You can assess the performance of Unzip by running the `get_asm_stats.py` script on the primary and haplotig fasta files:
+
+```bash
+python pb-assembly/scripts/get_asm_stats.py 3-unzip/all_p_ctg.fa 
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6082188, 
+ "asm_max": 7018959, 
+ "asm_mean": 4447277, 
+ "asm_median": 4568005, 
+ "asm_min": 32608, 
+ "asm_n50": 6169539, 
+ "asm_n90": 4568005, 
+ "asm_n95": 4568005, 
+ "asm_total_bp": 17789111
+}
+
+
+python pb-assembly/scripts/get_asm_stats.py 3-unzip/all_h_ctg.fa
+{
+ "asm_contigs": 50, 
+ "asm_esize": 747994, 
+ "asm_max": 1654630, 
+ "asm_mean": 338144, 
+ "asm_median": 169041, 
+ "asm_min": 4675, 
+ "asm_n50": 617201, 
+ "asm_n90": 223476, 
+ "asm_n95": 95301, 
+ "asm_total_bp": 16907217
+}
+```
+
+The assembly stats are largely the same for `3-unzip/all_p_ctg.fa` as they were after running FALCON. The total length of the alternate haplotigs (`3-unzip/all_h_ctg.fa`) 
+is typically shorter than the primary contigs and the assembly is more fragmented. For this test data, 16.9Mb/17.8Mb = 95% of the genome "unzipped" or is haplotype-resolved.
+This sample was specifically sequences in order to separate haplotypes; samples with lower heterozygosity will have a smaller proportion of the genome unzipped.
+
+A new feature of FALCON-Unzip is the `haplotig placement` file, `3-unzip/all_h_ctg.paf`, which specifies where each alternate haplotig
+aligns to the primary contigs in [Pairwise mApping Format](https://github.com/lh3/miniasm/blob/master/PAF.md).
+
+```bash
+$ head 3-unzip/all_h_ctg.paf 
+000002F_001     978968  0       978968  +       000002F 4568005 3132263 4100391 968128  968128  60
+000002F_002     126260  0       126260  +       000002F 4568005 562806  690698  127892  127892  60
+000002F_003     1654630 0       1654630 +       000002F 4568005 692926  2340316 1647390 1647390 60
+000002F_004     266093  0       266093  +       000002F 4568005 2842384 3110211 267827  267827  60
+000002F_005     102771  0       102771  +       000002F 4568005 2722867 2828717 105850  105850  60
+000002F_006     481464  0       481464  +       000002F 4568005 67901   546495  478594  478594  60
+000002F_007     443941  0       443941  +       000002F 4568005 4123628 4568005 444377  444377  60
+000002F_008     357850  0       357850  +       000002F 4568005 2352024 2700428 348404  348404  60
+000003F_001     22390   0       22390   +       000003F 32608   10258   32608   22350   22350   60
+000000F_001     434620  0       434620  +       000000F 7018959 2452537 2885704 433167  433167  60
+```
+
+You can think of the coordinates: `000002F_001:0-978968` and `000002F:3132263-4100391` as a `phase block` containing the two phased haplotypes.
+
+
+### Phased polishing
+
+The second stage of FALCON-Unzip is phased-polishing, which occurs in the `4-polish` directory. This method of polishing preserves the haplotype
+differences by polishing the primary contigs and alternate haplotigs with reads that are binned into the two haplotypes. 
+Some residual indel errors, particularly around homopolymer stretches may remain so consider concatenating your primary contigs and haplotigs 
+into a single reference and polishing with resequening as described above in the [polishing](#polish) section of this tutorial.
+
+After polishing, your final Unzip assembly files are: `4-polish/cns-output/cns_p_ctg.fasta` and `4-polish/cns-output/cns_h_ctg.fasta`. 
+
+```bash
+$ python pb-assembly/scripts/get_asm_stats.py 4-polish/cns-output/cns_p_ctg.fasta
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6097543, 
+ "asm_max": 7037049, 
+ "asm_mean": 4458862, 
+ "asm_median": 4582352, 
+ "asm_min": 32736, 
+ "asm_n50": 6183312, 
+ "asm_n90": 4582352, 
+ "asm_n95": 4582352, 
+ "asm_total_bp": 17835449
+}
+
+$ python pb-assembly/scripts/get_asm_stats.py 4-polish/cns-output/cns_h_ctg.fasta
+{
+ "asm_contigs": 46, 
+ "asm_esize": 752544, 
+ "asm_max": 1658804, 
+ "asm_mean": 367180, 
+ "asm_median": 229107, 
+ "asm_min": 16669, 
+ "asm_n50": 618770, 
+ "asm_n90": 223906, 
+ "asm_n95": 95389, 
+ "asm_total_bp": 16890306
+}
+```
+
+The stats are largely unchanged after polishing. 
+The coordinates for the PAF have shifted and unfortunately, we do not produce a PAF for the polished assembly at this time.
+However, the first stage of FALCON-Phase produces a haplotig placement file for the polished assembly using sequence alignment.
+
+
+## Run FALCON-Phase
+
+
+
+
+```bash
+(my-pbasm-env) $ mv all.log all1.log            
+(my-pbasm-env) $ fc_phase.py fc_phase.cfg &> run2.std &
+```
+
+
+
+<a name="faq"></a>
 # FAQ
 
 #### Where can I report issues / bugs / feature requests?
@@ -527,11 +962,16 @@ https://github.com/PacificBiosciences/pbbioconda/issues
 
 Please use this handy [bug report template](https://github.com/PacificBiosciences/pbbioconda/issues/new?template=bug_report.md).
 
-
+<a name="what-coverage"></a>
 #### What coverage do I need for _de novo_ assembly and polishing?
 
-When planning for a project, you should consider two types of coverage: `Sequence coverage` is the total bases generated divided by the 
-genome size. `Unique molecular coverage` or `physical coverage` is the number of _unique_ bases divided by the genome size. PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length and the length of the insert, among other factors. For _de novo_ genome assembly, we recommend selecting only a single subread per reaction well. This reduces the rate of chimerism/misassembly in the resulting contigs. However, we recommend using _all_ subreads when polishing your contigs in order to get the highest base qualities.
+When planning for a project, you should consider two types of coverage: `Sequence coverage` or `total coverage` is the total bases generated divided by the 
+genome size. `Unique molecular coverage` or `physical coverage` is the number of _unique_ bases divided by the genome size. 
+PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, 
+the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length 
+and the length of the insert, among other factors. For _de novo_ genome assembly, we recommend selecting only a single subread per reaction well. 
+This reduces the rate of chimerism/misassembly in the resulting contigs. However, we recommend using _all_ subreads when polishing your contigs 
+in order to get the highest base qualities.
 
 In general, we recommend:
 
@@ -539,7 +979,9 @@ In general, we recommend:
 
 + 50-80X `sequencing coverage` per haplotype for polishing
 
-Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage recommend above, while a homozygous tetraploid may also require double coverage (in a case where haplotypes are identical, but homeologs are not).
+Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage 
+recommend above, while a homozygous tetraploid may also require double coverage, (in a case where haplotypes are identical, but homeologs are not).
+In the latter example, assume genome length is 1N the length of one subgenome. 
 
 
 #### Can I start from corrected reads?
@@ -711,14 +1153,16 @@ of primary contig 000123F. The alignment position can be found in a
 coordinates after polishing is not yet produced but can be generated through alignments.
 
 
-
+<a name="acknowledgements"></a>
 # Acknowledgements
 Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic for their numerous improvements.
 
+<a name="citations"></a>
 # Citations
 + FALCON/FALCON-Unzip [Chin et al. (2016) Nature Methods 13:1050–1054](https://www.ncbi.nlm.nih.gov/pubmed/27749838)
 + HGAP [Chin et al. (2013) Nature Methods 10:563-9](https://www.ncbi.nlm.nih.gov/pubmed/23644548)
 
+<a name="disclaimer"></a>
 # Disclaimer
 THIS WEBSITE AND CONTENT AND ALL SITE-RELATED SERVICES, INCLUDING ANY DATA, ARE PROVIDED "AS IS," WITH ALL FAULTS, 
 WITH NO REPRESENTATIONS OR WARRANTIES OF ANY KIND, EITHER EXPRESS OR IMPLIED, INCLUDING, BUT NOT LIMITED TO, ANY 
