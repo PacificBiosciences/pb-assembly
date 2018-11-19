@@ -78,7 +78,7 @@ contigs and fully-phased haplotigs which represent divergent haplotypes.
 
 ## FALCON-Phase
 This method maps HiC data to the FALCON-Unzip assembly to fix phase switches between haplotigs within primary contigs. 
-Read the [preprint](http://biorxiv.org/cgi/content/short/327064v1) and [manual](https://github.com/phasegenomics/FALCON-Phase/blob/master/README.md). A stand-alone version 1 of the [software](https://github.com/phasegenomics/FALCON-Phase) is available through our co-developer, Phase Genomics. Version 2 is being integrated into bioconda and is still undergoing testing. Use at your own risk!
+Read the [preprint](http://biorxiv.org/cgi/content/short/327064v1) and [manual](https://github.com/phasegenomics/FALCON-Phase/blob/master/README.md). A stand-alone version 1 of the [software](https://github.com/phasegenomics/FALCON-Phase) is available through our co-developer, Phase Genomics. 
 
 ## Hierarchical Genome Assembly Process (aka non-hybrid PacBio assembly)
 Assembly with PacBio data uses the hierarchical genome assembly process (HGAP). The first round is pre-assembly or error correcction of the long reads. This involves
@@ -108,6 +108,7 @@ as a method for extended phasing.
 FALCON-Phase involves processing the FALCON-Unzip contigs into unzipped blocks (haplotigs pairs) and collapsed haplotypes and then
 mappin the HiC data in order to correctly separate the unzipped regions into pahses.
 
+<a name="fp-cartoon"></a>
 <h1 align="center"><img width="600px" src="img/Fig1_sbk.png" alt="FALCON Phase pipeline" /></h1>
 
 <a name="whats-new-in-pb-assembly"></a>
@@ -943,14 +944,79 @@ However, the first stage of FALCON-Phase produces a haplotig placement file for 
 
 ## Run FALCON-Phase
 
+The length of the phase-blocks (haplotigs) produced by FALCON-Unzip are limited by the magnitude and distribution of heterozygosity in the diploid genome,
+PacBio read lengths, the coverage depth. Regions of low heterozysity are resolved as collapsed haplotypes because they contain insufficient information for read phasing. 
+As a consequence, linkage information is lost between sequential phase blocks that are separated by a collapsed haplotype region. 
+To address the problem of phase switching between blocks on the primary contigs, PacBio and [Phase Genomics](https://phasegenomics.com/) implemented a novel stochastic algorithm called FALCON-Phase 
+which integrates ultra-range genotype information in the form of Hi-C read pairs.
 
-
+The preprint is available on biorXiv [here](https://www.biorxiv.org/content/early/2018/05/21/327064).
 
 ```bash
 (my-pbasm-env) $ mv all.log all1.log            
 (my-pbasm-env) $ fc_phase.py fc_phase.cfg &> run2.std &
 ```
 
+A [cartoon](#fp-cartoon) of the FALCON-Phase pipeline is above. The pipeline begins by producing a haplotig placement file
+using alignment of haplotig to primary contigs with mummer4. The placement file guides the `mincing` of the primary contigs to define
+phase blocks of haplotig and primary contigs sequences. HiC reads are mapped to these minced contigs and based on the density of read pairs
+haplotype phase switch errors are corrected.
+
+Two options for output fasta files are available: `unzip` produces primary contig and haplotigs but with the phase switch errors corrected.
+`pseudohap` produces two contigs similar to the primary contigs but with the unzipped regions all in phase with each other. If you want a 
+haploid version of your genome, choose `unzip` style. If you prefer a diploid version of the genome, choose the pseudohaplotype format.
+
+See the haplotig placement file:
+
+```bash
+$ head 5-phase/placement-output/haplotig.placement 
+000000F_004     902477  0       902477  +       000000F 7037049 8       897889  902477  902477  60
+000000F_008     52009   0       52009   +       000000F 7037049 927907  978232  52009   52009   60
+000000F_007     641978  0       641978  +       000000F 7037049 978232  1620331 641978  641978  60
+000000F_006     565777  0       565777  +       000000F 7037049 1803676 2370153 565777  565777  60
+000000F_017     88633   0       88633   +       000000F 7037049 2370153 2458441 88633   88633   60
+000000F_001     435877  0       435877  +       000000F 7037049 2458441 2892768 435877  435877  60
+000000F_020     52718   0       52718   +       000000F 7037049 2892768 2946870 52718   52718   60
+000000F_014     229107  0       229107  +       000000F 7037049 2946870 3175808 229107  229107  60
+000000F_019     83728   0       83728   +       000000F 7037049 3175808 3259330 83728   83728   60
+000000F_015     223906  0       223906  +       000000F 7037049 3259330 3487449 223906  223906  60
+```
+
+Final output stats in the `pseudohap` format are similar to the primary contigs from FALCON and FALCON-Unzip:
+
+
+```bash
+$ python pb-assembly/scripts/get_asm_stats.py 5-phase/output/phased.0.fasta 
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6094408, 
+ "asm_max": 7038334, 
+ "asm_mean": 4457216, 
+ "asm_median": 4587500, 
+ "asm_min": 32780, 
+ "asm_n50": 6170253, 
+ "asm_n90": 4587500, 
+ "asm_n95": 4587500, 
+ "asm_total_bp": 17828867
+}
+
+$ python pb-assembly/scripts/get_asm_stats.py 5-phase/output/phased.1.fasta 
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6099451, 
+ "asm_max": 7039100, 
+ "asm_mean": 4462161, 
+ "asm_median": 4598741, 
+ "asm_min": 32736, 
+ "asm_n50": 6178068, 
+ "asm_n90": 4598741, 
+ "asm_n95": 4598741, 
+ "asm_total_bp": 17848645
+}
+```
+
+Note: the contigs in the `phased.0.fasta` and `phased.1.fasta` files are not necessarilly in phase with each other, although the 
+phase blocks within each contig are in phase.
 
 
 <a name="faq"></a>
