@@ -540,6 +540,8 @@ We will work through the commands and results and give you ideas of how to asses
 the perfomance of pb-assembly on your dataset so you can modify parameters and trouble-shoot more 
 effectively.
 
+This tutorial was run using v0.0.2 of the pb-assembly bioconda metapackage. 
+
 
 ## Prepare data and directory
 
@@ -560,11 +562,9 @@ the file transfer is complete.
 00e1c1ad1d33e4cd481747d7efdffcc0  F1_bull_test.subreads.fasta.gz - PacBio subreads for falcon assembly
 6cf93f0d096ddf0ce3017f25c56ff7e4  F1_bull_test.HiC_R2.fastq.gz - HiC data for falcon phase
 ce8f6057e07459bb091ceeca7f6ff04e  F1_bull_test.HiC_R1.fastq.gz - HiC data for falcon phase
-bfb2bffd02a6a3b6781c832dd6cfd19a  phased.1.fasta.gz - full pipeline output, pseudohaplotype phase 0
-509d9825250e3f34a4b44aac8053ed83  phased.0.fasta.gz - full pipeline output, pseudohaplotype phase 1
-446c74b31eee37286c69e850a933a1fe  fc_unzip.cfg - contig file for fc_unzip.py
-976006b5d55b97d10afc15e131ff7a99  fc_phase.cfg - config file for fc_phase.py
-6629b5d6be0a49e81cf8703d9c52732b  fc_run.cfg - contig file for fc_run (falcon)
+39ec303e6527dd227770cd33dbdb3609  fc_run.cfg  - contig file for fc_run (falcon)
+c52064770d25def32974e7a11211d9c8  fc_unzip.cfg  - contig file for fc_unzip.py
+51dc7c9e1e26c44d9cc5f5e491f53d2b  fc_phase.cfg  - config file for fc_phase.py
 81033c7c4ed46fe8b1c89e9d33cc1e84  F1_bull_test.subreads.bam - PacBio subreads for unzip
 ```
 
