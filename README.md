@@ -599,6 +599,7 @@ See the [Availability](#availability) section for more details about installatio
 Make sure you are using ``screen`` or ``tmux`` or sending your job to a cluster scheduler so your job persists.
 
 
+
 ## Run FALCON
 
 You're good to go! Let's run it!
@@ -643,7 +644,7 @@ Yo, initial overlaps are done!
 It is also helpful to know what stage an individual job is running. On an SGE cluster, for example, I can get at list of my running processes like this:
 
 ```bash
-$$ qstat | grep myname
+$ qstat | grep myname
 9580947 1.03953 Pf02af7214 myname  r     11/16/2018 15:12:12 bigmem@mp1306-sge66                8        
 9580952 1.03953 P1f6ce5c60 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
 9580954 1.03953 P941e007f7 myname  r     11/16/2018 15:12:12 bigmem@mp1304-sge66                8        
@@ -657,19 +658,22 @@ And I can get details about these processes like this:
 $ qstat -j 9580947
 ```
 
-This command outputs all sorts of useful information like stderr paths and submission times:
+The above command outputs all sorts of useful information like stderr paths and submission times:
 
 ```bash
+...
 stdout_path_list:           NONE:NONE:/path/to/my_job_dir/1-preads_ovl/daligner-runs/j_0077/run-Pf02af721455dae.bash.stdout
+...
 submission_time:            Fri Nov 16 15:12:09 2018
+...
 ```
 
 ### Read Stats
 
 The first step in FALCON is to build a dazzler database. From the `0-rawreads/build/raw_reads.db` you can easily extract 
 a histogram of read lengths for the subreads used in assembly. In addition, the total base pairs can be used to calculate
-raw subread coverage if you know your genome size. You may notice that your base pairs is lower than the total yield of 
-your SMRT cells, particulary if you are using version 3.0 chemistry of sequel. Consult the [FAQ](*what-coverage") section for more details.
+raw subread coverage if you know your genome size. You may notice that the base pairs from the dazzDB is lower than the total yield of 
+your SMRT cells, particulary if you are using version 3.0 chemistry of sequel. Consult the [FAQ](#what-coverage) section for more details.
 
 ```bash
 (my-pbasm-env) $ DBstats raw_reads.db
@@ -774,12 +778,12 @@ $ {
 A note on these statistics: in the process of created preads, seeds reads with insufficient raw read coverage 
 (falcon_sense_option = --min_cov option) will be split or truncated. The preassembled seed fragmentation, truncation, 
 and yield stats summarize the quality of pread assembly. A good preassembled yield should be greater than 50%. Often
-coverage-limited assemblies (<30X coverage) show very poor preassembled yield. 
+coverage-limited assemblies (<30X coverage) show poor preassembled yield. 
 
 
 ### Assembly Performance
 
-When your run is complete, you can summarize your assembly stats using the get_asm_stats.py included in the 
+When your run is complete, you can summarize your assembly stats using the `get_asm_stats.py` included in the 
 documatation package.
 
 ```bash
@@ -799,13 +803,17 @@ $ python pb-assembly/scripts/get_asm_stats.py 2-asm-falcon/p_ctg.fa
 }
 ```
 
-Check the assembly completeness: is `asm_total_bp` what you expect your genome size to be? And check the contiguity:
-asm_n50 larger than 1Mb is best for downstream scaffolding and annotion effort. You'll need to use third party tools 
-to check for correctness. To assess contig assembly correctness, align your contigs against a similar reference (if available) 
-using [minimap](https://github.com/lh3/minimap2) or [mummer](https://github.com/mummer4/mummer/blob/master/MANUAL.md) and 
-visualize with a tool like [dgenies](http://dgenies.toulouse.inra.fr/), [assemblytics](http://assemblytics.com/), 
-or [dot](https://github.com/dnanexus/dot). To check base level accuracy 
-(after polishing) use [BUSCO](http://gitlab.com/ezlab/busco/raw/master/BUSCO_v3_userguide.pdf).
++ Check the assembly `completeness`:
+is `asm_total_bp` what you expect your genome size to be?
++ Check the `contiguity`:
+asm_n50 larger than 1Mb is best for downstream scaffolding and annotion effort.
++ Check the `correctness` of the contigs using third party tools:
+align your contigs against a similar reference (if available) using [minimap](https://github.com/lh3/minimap2) 
+or [mummer](https://github.com/mummer4/mummer/blob/master/MANUAL.md) and visualize with a tool like 
+[dgenies](http://dgenies.toulouse.inra.fr/), [assemblytics](http://assemblytics.com/), 
+or [dot](https://github.com/dnanexus/dot).
++ Check base level correctnes (after polishing):
+Use [BUSCO](http://gitlab.com/ezlab/busco/raw/master/BUSCO_v3_userguide.pdf) to look for single copy conserved genes.
 
 
 ### Polishing
@@ -815,6 +823,23 @@ do not proceed to FALCON-Unzip! Polishing increased base pair accuracy by mappin
 and then computing the consensus sequence of the aligned reads. Assembly polishing may be run using the resequencing pipeline 
 of pbsmrtpipe (command line instruction available in the [SMRT_Tools_Reference_Guide](https://www.pacb.com/wp-content/uploads/SMRT_Tools_Reference_Guide_v600.pdf)
 or through the [SMRT Link GUI](https://www.pacb.com/wp-content/uploads/SMRT_Link_User_Guide_v600.pdf). Resequencing requires PacBio subread BAM inputs.
+
+
+
+## Run FALCON-Unzip
+
+```bash
+(my-pbasm-env) $ mv all.log all0.log
+(my-pbasm-env) $ fc_unzip.py fc_unzip.cfg &> run1.std &
+```
+
+
+## Run FALCON-Phase
+
+```bash
+(my-pbasm-env) $ mv all.log all1.log            
+(my-pbasm-env) $ fc_phase.py fc_phase.cfg &> run2.std &
+```
 
 
 
@@ -830,8 +855,13 @@ Please use this handy [bug report template](https://github.com/PacificBioscience
 <a name="what-coverage"></a>
 #### What coverage do I need for _de novo_ assembly and polishing?
 
-When planning for a project, you should consider two types of coverage: `Sequence coverage` is the total bases generated divided by the 
-genome size. `Unique molecular coverage` or `physical coverage` is the number of _unique_ bases divided by the genome size. PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length and the length of the insert, among other factors. For _de novo_ genome assembly, we recommend selecting only a single subread per reaction well. This reduces the rate of chimerism/misassembly in the resulting contigs. However, we recommend using _all_ subreads when polishing your contigs in order to get the highest base qualities.
+When planning for a project, you should consider two types of coverage: `Sequence coverage` or `total coverage` is the total bases generated divided by the 
+genome size. `Unique molecular coverage` or `physical coverage` is the number of _unique_ bases divided by the genome size. 
+PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, 
+the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length 
+and the length of the insert, among other factors. For _de novo_ genome assembly, we recommend selecting only a single subread per reaction well. 
+This reduces the rate of chimerism/misassembly in the resulting contigs. However, we recommend using _all_ subreads when polishing your contigs 
+in order to get the highest base qualities.
 
 In general, we recommend:
 
@@ -839,7 +869,9 @@ In general, we recommend:
 
 + 50-80X `sequencing coverage` per haplotype for polishing
 
-Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage recommend above, while a homozygous tetraploid may also require double coverage (in a case where haplotypes are identical, but homeologs are not).
+Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage 
+recommend above, while a homozygous tetraploid may also require double coverage, (in a case where haplotypes are identical, but homeologs are not).
+In the latter example, assume genome length is 1N the length of one subgenome. 
 
 
 #### Can I start from corrected reads?
