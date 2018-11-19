@@ -839,7 +839,7 @@ You run FALCON-Unzip in the same directory with a different configuration file. 
 
 ### Haplotype resolution
 
-The first stage of FALCON-Unzip involves calling variants, binning reads by haplotype, then haplotype-specific re-assembly. This occurs in the
+The first stage of FALCON-Unzip involves calling variants in the FALCON assembly, binning reads by haplotype, then haplotype-specific re-assembly. This occurs in the
 `3-unzip` directory. You can assess the performance of Unzip by running the `get_asm_stats.py` script on the primary and haplotig fasta files:
 
 ```bash
@@ -873,12 +873,12 @@ python pb-assembly/scripts/get_asm_stats.py 3-unzip/all_h_ctg.fa
 }
 ```
 
-The assembly stats are largely the same for 3-unzip/all_p_ctg.fa as they were after running FALCON. The stats for the alternate haplotigs (`3-unzip/all_h_ctg.fa`) 
-are typically shorter than the primary contigs and more fragmented. For this test data, 16.9Mb/17.8Mb = 95% of the genome "unzipped" or is haplotype-resolved.
-Samples with lower heterozygosity will have a smaller proportion of the genome unzipped.
+The assembly stats are largely the same for `3-unzip/all_p_ctg.fa` as they were after running FALCON. The total length of the alternate haplotigs (`3-unzip/all_h_ctg.fa`) 
+is typically shorter than the primary contigs and the assembly is more fragmented. For this test data, 16.9Mb/17.8Mb = 95% of the genome "unzipped" or is haplotype-resolved.
+This sample was specifically sequences in order to separate haplotypes; samples with lower heterozygosity will have a smaller proportion of the genome unzipped.
 
 A new feature of FALCON-Unzip is the `haplotig placement` file, `3-unzip/all_h_ctg.paf`, which specifies where each alternate haplotig
-aligned to the primary contig in [Pairwise mApping Format](https://github.com/lh3/miniasm/blob/master/PAF.md).
+aligns to the primary contigs in [Pairwise mApping Format](https://github.com/lh3/miniasm/blob/master/PAF.md).
 
 ```bash
 $ head 3-unzip/all_h_ctg.paf 
@@ -899,10 +899,46 @@ You can think of the coordinates: `000002F_001:0-978968` and `000002F:3132263-41
 
 ### Phased polishing
 
-The second stage of FALCON-Unzip is phased-polishing, which occurs in the `4-polish` directory. This method of polishing preserved the haplotype
+The second stage of FALCON-Unzip is phased-polishing, which occurs in the `4-polish` directory. This method of polishing preserves the haplotype
 differences by polishing the primary contigs and alternate haplotigs with reads that are binned into the two haplotypes. 
 Some residual indel errors, particularly around homopolymer stretches may remain so consider concatenating your primary contigs and haplotigs 
-into a single reference and polishing with resequening as described [above](#polish).
+into a single reference and polishing with resequening as described above in the [polishing](#polish) section of this tutorial.
+
+After polishing, your final Unzip assembly files are: `4-polish/cns-output/cns_p_ctg.fasta` and `4-polish/cns-output/cns_h_ctg.fasta`. 
+
+```bash
+$ python pb-assembly/scripts/get_asm_stats.py 4-polish/cns-output/cns_p_ctg.fasta
+{
+ "asm_contigs": 4, 
+ "asm_esize": 6097543, 
+ "asm_max": 7037049, 
+ "asm_mean": 4458862, 
+ "asm_median": 4582352, 
+ "asm_min": 32736, 
+ "asm_n50": 6183312, 
+ "asm_n90": 4582352, 
+ "asm_n95": 4582352, 
+ "asm_total_bp": 17835449
+}
+
+$ python pb-assembly/scripts/get_asm_stats.py 4-polish/cns-output/cns_h_ctg.fasta
+{
+ "asm_contigs": 46, 
+ "asm_esize": 752544, 
+ "asm_max": 1658804, 
+ "asm_mean": 367180, 
+ "asm_median": 229107, 
+ "asm_min": 16669, 
+ "asm_n50": 618770, 
+ "asm_n90": 223906, 
+ "asm_n95": 95389, 
+ "asm_total_bp": 16890306
+}
+```
+
+The stats are largely unchanged after polishing. 
+The coordinates for the PAF have shifted and unfortunately, we do not produce a PAF for the polished assembly at this time.
+However, the first stage of FALCON-Phase produces a haplotig placement file for the polished assembly using sequence alignment.
 
 
 ## Run FALCON-Phase
