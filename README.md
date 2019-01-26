@@ -114,6 +114,8 @@ mappin the HiC data in order to correctly separate the unzipped regions into pah
 <a name="whats-new-in-pb-assembly"></a>
 # What's New in PB Assembly
 
+Latest release notes can be found [here](https://github.com/PacificBiosciences/pbbioconda/wiki/Release-notes).
+
 **(September 2018)**
 
 ## FALCON
