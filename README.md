@@ -1069,6 +1069,9 @@ samtools faidx movie.median.fasta
 cut -f2 movie.median.fasta.fai | datamash sum 1 > movie.umy
 ```
 
+Then divide `unique molecular yield` by your `genome size` to get unique molecular coverage.
+
+
 #### Can I start from corrected reads?
 
 Yes. The option `input_type` can be set to either `raw` or `preads`. In the case of the latter,
