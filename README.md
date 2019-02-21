@@ -1051,6 +1051,22 @@ Coverage requirements scale linearly by the number of unique haplotypes. For exa
 recommend above, while a homozygous tetraploid may also require double coverage, (in a case where haplotypes are identical, but homeologs are not).
 In the latter example, assume genome length is 1N the length of one subgenome. 
 
+#### How do I calculate unique molecular coverage?
+
+Unique molecular yield is not currently reported for a sequencing run. To calculate it, make sure you have pb-assembly and bamtools loaded in your path and run the following commands:
+
+```bash
+# convert subreads.bam to subreads.fasta
+bamtools convert -format fasta -in movie.subreads.bam -out movie.subreads.fasta
+# generate fasta file with just as single, median-length subread
+python -m falcon_kit.mains.fasta_filter median movie.subreads.fasta > movie.median.fasta
+```
+With the new fasta file you can run `samtools faidx` to get the lengths and then sum them up with a utility like datamash.
+
+``bash
+samtools faidx movie.median.fasta
+cut -f2 movie.median.fasta.fai | datamash sum 1 > movie.umy
+```
 
 #### Can I start from corrected reads?
 
