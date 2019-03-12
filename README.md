@@ -1033,8 +1033,8 @@ Please use this handy [bug report template](https://github.com/PacificBioscience
 <a name="what-coverage"></a>
 #### What coverage do I need for _de novo_ assembly and polishing?
 
-When planning for a project, you should consider two types of coverage: `Sequence coverage` or `total coverage` is the total bases generated divided by the 
-genome size. `Unique molecular coverage` or `physical coverage` is the number of _unique_ bases divided by the genome size. 
+When planning for a project, you should consider two types of coverage: `total coverage` is the total bases generated divided by the 
+genome size. `Unique molecular coverage` is the number of _unique_ bases divided by the genome size. 
 PacBio sequencing can generate multiple subreads for a single template molecule because within a reaction well, 
 the polymerase may make multiple passes around the circular library molecule. How many passes depends on the movie length 
 and the length of the insert, among other factors. For _de novo_ genome assembly, we recommend selecting only a single subread per reaction well. 
@@ -1044,8 +1044,6 @@ in order to get the highest base qualities.
 In general, we recommend:
 
 + 30-50X `unique molecular coverage` _per haplotye_ for assembly
-
-+ 50-80X `sequencing coverage` per haplotype for polishing
 
 Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage 
 recommend above, while a homozygous tetraploid may also require double coverage, (in a case where haplotypes are identical, but homeologs are not).
