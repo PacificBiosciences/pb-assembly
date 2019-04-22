@@ -180,6 +180,10 @@ Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent
 
 ## FALCON Configuration
 
+Up to date configuration info can be found in the [wiki](https://github.com/PacificBiosciences/FALCON-integrate/wiki/Configuring-Unzip).
+
+Detailed explanations below:
+
 The FALCON pipeline has three main steps which occur in distinct directories:
 
 | Subdirectory | Description          
