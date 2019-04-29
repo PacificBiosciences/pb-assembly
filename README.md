@@ -1055,7 +1055,7 @@ In the latter example, assume genome length is 1N the length of one subgenome.
 
 #### How do I calculate unique molecular coverage?
 
-Unique molecular yield is not currently reported for a sequencing run. To calculate it, make sure you have `pb-assembly` and [`bamtools`](https://github.com/pezmaster31/bamtools) loaded in your path and run the following commands:
+Unique molecular yield is now reported in SMRT Link (v7.0.0). To calculate it at the command line0220, make sure you have `pb-assembly` and [`bamtools`](https://github.com/pezmaster31/bamtools) loaded in your path and run the following commands:
 
 ```bash
 # convert subreads.bam to subreads.fasta
