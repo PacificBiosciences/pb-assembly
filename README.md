@@ -118,7 +118,7 @@ mappin the HiC data in order to correctly separate the unzipped regions into pah
 
 See the latest release notes for the bioconda distribution [here](https://github.com/PacificBiosciences/pbbioconda/wiki/Release-notes).
 
-**(Feature Highlights from February - April 2019 Releases)**
+## Feature Highlights from February - April 2019 Releases ##
 
 + gcpp instead of GenomicConsensus for polishing (Falcon_unzip 1.2.0)
 
@@ -130,9 +130,9 @@ Config: [Unzip]polish_include_zmw_all_subreads is "true"
 ConfigL [Unzip]polish_use_blasr = true for blasr
 
 
-**(September 2018)**
+## September 2018 ##
 
-## FALCON
+### FALCON
 + Repeat Masking
 Integration of Tandem repeat masking (done) and general repeat masking (done)
 
@@ -147,7 +147,7 @@ Integration of Tandem repeat masking (done) and general repeat masking (done)
 -general workflow and resource specification improvements
 -easier integration of future features with Pbsmrtpipe
 
-## FALCON-Unzip
+### FALCON-Unzip
 + Improved Haplotig Extraction
 -algorithm and data structure improvements reduce haplotype switching and improve extraction
 -can now handle circular contigs!
@@ -160,7 +160,7 @@ Integration of Tandem repeat masking (done) and general repeat masking (done)
 -unzipping and polishing now part of single workflow
 -reduced memory requirements
 
-## FALCON-Phase
+### FALCON-Phase
 + New integration into pb-assembly pipeline
 
 <a name="usage"></a>
