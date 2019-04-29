@@ -125,7 +125,7 @@ See the latest release notes for the bioconda distribution [here](https://github
 + Use all subreads for polishing (Falcon_unzip 1.1.5) We used to use only 1 per zmw, same as assembly typically. Chemistry v3+ has longer polymerase reads, resulting in multiple passes of library inserts in many cases. Read more [here](#what-coverage).
 Config: [Unzip]polish_include_zmw_all_subreads is "true"
 
-+ Use pbmm2 instead of blasr by default (Falcon_unzip 1.1.5)
++ Use [pbmm2](https://github.com/PacificBiosciences/pbmm2/) instead of blasr by default (Falcon_unzip 1.1.5)
 Config: [Unzip]polish_use_blasr = true for blasr
 
 
