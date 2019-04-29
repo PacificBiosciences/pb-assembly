@@ -123,11 +123,12 @@ See the latest release notes for the bioconda distribution [here](https://github
 + gcpp instead of GenomicConsensus for polishing (Falcon_unzip 1.2.0)
 
 + Use all subreads for polishing (Falcon_unzip 1.1.5)
-(We used to use only 1 per zmw, same as assembly typically.)
+
+We used to use only 1 per zmw, same as assembly typically. Chemistry v3+ has longer polymerase reads and shorter inserts have multiple passes. Read more here.
 Config: [Unzip]polish_include_zmw_all_subreads is "true"
 
 + Use pbmm2 instead of blasr by default (Falcon_unzip 1.1.5)
-ConfigL [Unzip]polish_use_blasr = true for blasr
+Config: [Unzip]polish_use_blasr = true for blasr
 
 
 ## September 2018 ##
