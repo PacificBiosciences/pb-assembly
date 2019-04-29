@@ -116,7 +116,19 @@ mappin the HiC data in order to correctly separate the unzipped regions into pah
 <a name="whats-new-in-pb-assembly"></a>
 # What's New in PB Assembly
 
-Latest release notes can be found [here](https://github.com/PacificBiosciences/pbbioconda/wiki/Release-notes).
+See the latest release notes for the bioconda distribution [here](https://github.com/PacificBiosciences/pbbioconda/wiki/Release-notes).
+
+**(Feature Highlights from February - April 2019 Releases)**
+
++ gcpp instead of GenomicConsensus for polishing (Falcon_unzip 1.2.0)
+
++ Use all subreads for polishing (Falcon_unzip 1.1.5)
+(We used to use only 1 per zmw, same as assembly typically.)
+Config: [Unzip]polish_include_zmw_all_subreads is "true"
+
++ Use pbmm2 instead of blasr by default (Falcon_unzip 1.1.5)
+ConfigL [Unzip]polish_use_blasr = true for blasr
+
 
 **(September 2018)**
 
