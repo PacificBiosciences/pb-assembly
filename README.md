@@ -38,6 +38,8 @@ conda install pb-assembly
 Please refer to our [official pbbioconda page](https://github.com/PacificBiosciences/pbbioconda)
 for information on Installation, Support, License, Copyright, and Disclaimer.
 
+Latest release notes can be found [here](https://github.com/PacificBiosciences/pbbioconda/wiki/Release-notes).
+
 GitHub issues can be filed [here](https://github.com/PacificBiosciences/pbbioconda/issues) for problems and questions.
 
 If you are looking for a GUI based long read *de novo* genome assembler, you are urged to learn about 
