@@ -217,7 +217,7 @@ Below is a breakdown of the configuration options available to FALCON:
 [General]
 input_fofn=input.fofn
 input_type=raw
-pa_DBdust_option=true
+pa_DBdust_option=
 pa_fasta_filter_option=streamed-median
 ```
 
