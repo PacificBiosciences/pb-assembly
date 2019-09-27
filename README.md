@@ -1290,9 +1290,7 @@ Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic/Zev Kron
 # Citations
 + FALCON/FALCON-Unzip [Chin et al. (2016) Nature Methods 13:1050–1054](https://www.ncbi.nlm.nih.gov/pubmed/27749838)
 + HGAP [Chin et al. (2013) Nature Methods 10:563-9](https://www.ncbi.nlm.nih.gov/pubmed/23644548)
-+ HiFi assembly
- - [Highly-accurate long-read sequencing improves variant detection and assembly of a human genome](https://www.biorxiv.org/content/10.1101/519025v2)
- - [Improved assembly and variant detection of a haploid human genome using single-molecule, high-fidelity long reads](https://www.biorxiv.org/content/10.1101/635037v3)
++ HiFi assembly: [Wenger et al. (2019) Nature Methods](https://www.biorxiv.org/content/10.1101/519025v2)
 
 
 
