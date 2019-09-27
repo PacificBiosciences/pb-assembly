@@ -205,6 +205,8 @@ below.
 
 Here is a sample [fc_run.cfg](cfgs/fc_run_human.cfg) that was used with a recent ~2.9Gb human genome assembly.
 
+Example of FALCON configuration for HiFi data: [fc_run_HiFi.cfg](https://github.com/PacificBiosciences/pb-assembly/blob/master/cfgs/fc_run_HiFi.cfg)
+
 Up to date configuration info can be found in the [wiki](https://github.com/PacificBiosciences/FALCON-integrate/wiki/Configuring-Unzip).
 
 Detailed explanations for each pipeline stage are below:
@@ -523,6 +525,8 @@ be redundant with your `fc_run.cfg`. Finally, if you wish to polish your unzippe
 specify a list of your input bam files with `input_bam_fofn`.
 
 Here is a sample [fc_unzip.cfg](cfgs/fc_unzip.cfg) that will need to be tuned to your compute environment.
+
+Here is a sample [fc_unzip_HiFi.cfg](https://github.com/PacificBiosciences/pb-assembly/blob/master/cfgs/fc_unzip_HiFi.cfg) for HiFi data.
 
 ### Job Distribution
 
@@ -1055,6 +1059,10 @@ phase blocks within each contig are in phase.
 <a name="faq"></a>
 # FAQ
 
+#### Can I run FALCON with HiFi data?
+
+Yes, see details [here](https://github.com/PacificBiosciences/pbbioconda/wiki/Assembling-HiFi-data:-FALCON-Unzip3)
+
 #### Where can I report issues / bugs / feature requests?
 
 https://github.com/PacificBiosciences/pbbioconda/issues
@@ -1076,9 +1084,13 @@ In general, we recommend:
 
 + 30-50X `unique molecular coverage` _per haplotye_ for assembly
 
-Coverage requirements scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage 
+Coverage requirements for scale linearly by the number of unique haplotypes. For example, a highly heterozygous diploid may require double the coverage 
 recommend above, while a homozygous tetraploid may also require double coverage, (in a case where haplotypes are identical, but homeologs are not).
 In the latter example, assume genome length is 1N the length of one subgenome. 
+
+We recommend
++ 15-20X `HiFi coverage` for haploids or diploids
+
 
 #### How do I calculate unique molecular coverage?
 
@@ -1272,12 +1284,18 @@ coordinates after polishing is not yet produced but can be generated through ali
 
 <a name="acknowledgements"></a>
 # Acknowledgements
-Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic for their numerous improvements.
+Thanks to Jason Chin for the original concept and Chris Dunn/Ivan Sovic/Zev Kronenberg for their numerous improvements.
 
 <a name="citations"></a>
 # Citations
 + FALCON/FALCON-Unzip [Chin et al. (2016) Nature Methods 13:1050–1054](https://www.ncbi.nlm.nih.gov/pubmed/27749838)
 + HGAP [Chin et al. (2013) Nature Methods 10:563-9](https://www.ncbi.nlm.nih.gov/pubmed/23644548)
++ HiFi assembly
+ - [Highly-accurate long-read sequencing improves variant detection and assembly of a human genome](https://www.biorxiv.org/content/10.1101/519025v2)
+ - [Improved assembly and variant detection of a haploid human genome using single-molecule, high-fidelity long reads](https://www.biorxiv.org/content/10.1101/635037v3)
+
+
+
 
 <a name="disclaimer"></a>
 # Disclaimer
