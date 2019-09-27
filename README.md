@@ -34,6 +34,11 @@ conda create -n denovo_asm
 source activate denovo_asm
 conda install pb-assembly
 ```
+
+To updates the code run:
+```bash
+conda update --all
+```
         
 Please refer to our [official pbbioconda page](https://github.com/PacificBiosciences/pbbioconda)
 for information on Installation, Support, License, Copyright, and Disclaimer.
