@@ -47,6 +47,8 @@ Latest release notes can be found [here](https://github.com/PacificBiosciences/p
 
 GitHub issues can be filed [here](https://github.com/PacificBiosciences/pbbioconda/issues) for problems and questions.
 
+FALCON has been update to be compatibile with HiFi data. Please refer to this [documentation](https://github.com/PacificBiosciences/pbbioconda/wiki/Assembling-HiFi-data:-FALCON-Unzip3) for more information.
+
 If you are looking for a GUI based long read *de novo* genome assembler, you are urged to learn about 
 [HGAP4](https://www.pacb.com/videos/tutorial-hgap4-de-novo-assembly-application/)
 
@@ -70,8 +72,6 @@ Installed package recipes include:
 
 <a name="general-overview"></a>    
 # General Overview
-
-FALCON has recently been update to be compatibile with HiFi data. Please refer to this [documentation](https://github.com/PacificBiosciences/pbbioconda/wiki/Assembling-HiFi-data:-FALCON-Unzip3) for more information.
 
 ## FALCON and FALCON-Unzip
 FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
@@ -122,6 +122,8 @@ mappin the HiC data in order to correctly separate the unzipped regions into pah
 
 <a name="whats-new-in-pb-assembly"></a>
 # What's New in PB Assembly
+
+FALCON and FALCON-Unzip are now compatibile with HiFi data. Please refer to this [documentation](https://github.com/PacificBiosciences/pbbioconda/wiki/Assembling-HiFi-data:-FALCON-Unzip3) for details on how to run it.
 
 See the latest release notes for the bioconda distribution [here](https://github.com/PacificBiosciences/pbbioconda/wiki/Release-notes).
 
@@ -181,6 +183,11 @@ fc_run fc_run.cfg
 ## Unzip and polish
 ```bash   
 fc_unzip.py fc_unzip.cfg
+```
+
+Running with HiFi data:
+```bash
+fc_unzip.py --target='ccs' fc_unzip.cfg
 ```
 
 ## Extended phasing with HiC
