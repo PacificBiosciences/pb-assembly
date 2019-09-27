@@ -71,6 +71,8 @@ Installed package recipes include:
 <a name="general-overview"></a>    
 # General Overview
 
+FALCON has recently been update to be compatibile with HiFi data. Please refer to this [documentation](https://github.com/PacificBiosciences/pbbioconda/wiki/Assembling-HiFi-data:-FALCON-Unzip3) for more information.
+
 ## FALCON and FALCON-Unzip
 FALCON and FALCON-Unzip are *de novo* genome assemblers for PacBio long reads, also known as 
 Single-Molecule Real-Time (SMRT) sequences. FALCON is a diploid-aware assembler which follows 
