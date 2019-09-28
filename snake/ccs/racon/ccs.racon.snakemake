@@ -1,0 +1,55 @@
+configfile: "config.json"
+
+shell.prefix( " set -eo pipefail ; " )
+
+
+NAMES = []	
+with open(config['fai']) as f:
+     for line in f:
+     	 lc = line.strip().split("\t")
+         NAMES.append(lc[0])
+
+
+rule dummy:
+     input: "output/polished.fa"
+
+rule collect:
+     input: expand("polishing/{name}/{name}.polished.fa", name=NAMES)
+     output: temp("output/fa.fofn"), "output/polished.fa"
+     shell: """
+        > {output[1]}
+	find polishing/ -name "*.polished.fa" -size +0 > {output[0]}
+        for f in `cat {output[0]}`; do cat $f >> {output[1]}; done
+     """
+
+rule polish:
+     input: SEQUENCES="polishing/{name}/filt.reads.fastq", OVERLAPS="polishing/{name}/filt.reads.sam", TARGET="polishing/{name}/target.fa"
+     output: "polishing/{name}/{name}.polished.fa"
+     params: RCPU=config['polish_cpu']
+     shell: """
+	    if [-s {input.SEQUENCES}]
+	    then
+	     	    racon -u -t {params.RCPU} {input.SEQUENCES} {input.OVERLAPS} {input.TARGET} > {output}
+	    else
+		touch {output}
+	    fi
+     """
+
+rule prep:
+     input: FASTA=config['fa'], BAM="mapping/aln.sort.bam"
+     output: temp("polishing/{name}/target.fa"), temp("polishing/{name}/filt.reads.sam"), temp("polishing/{name}/filt.reads.fastq")
+     message: "Preparing files for polishing."
+     shell: """
+            samtools faidx {input.FASTA} {wildcards.name} > {output[0]}
+     	    samtools view -q 10 -F 1796 {input.BAM} {wildcards.name} > {output[1]}
+	    samtools view -q 10 -F 1796 -b {input.BAM} {wildcards.name} | samtools fastq - > {output[2]}
+     """
+
+rule aln:
+     input: FASTA = config['fa'], FOFN=config['fq_fofn']
+     output: "mapping/aln.sort.bam"
+     message: "Mapping fastq to input."
+     params: MCPU=config['map_cpu'], SCPU=config['sort_cpu']
+     shell: """
+     	    pbmm2 align --preset CCS --sort -j {params.MCPU} -J {params.SCPU} {input.FASTA} {input.FOFN} {output}
+     """
