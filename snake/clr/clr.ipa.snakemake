@@ -1,0 +1,232 @@
+import os
+print(f'CWD:{os.getcwd()}')
+###configfile: "../config.json"  # Prefer --configfile=
+NUM_THREADS = config['pb_assembly_microbial.nproc'],
+reads_fn = os.path.join(config['MAKEDIR'], config['pb_assembly_microbial.eid_subread']),
+
+CONFIG_SH_FN = os.environ.get("CONFIG_SH_FN").split()[0]
+
+#MAP_MIN_LEN = config.get('map_min_len', 499)
+#print(f'Using map_min_len={MAP_MIN_LEN}')
+
+shell.prefix("set -vxeu -o pipefail; ")
+print(config)
+
+rule build_raw_rdb:
+    output:
+        rdb = 'build_raw_rdb/rawreads.rdb',
+        cutoff = 'build_raw_rdb/length_cutoff',
+        #all_subreadnames = 'build_raw_rdb/all-subreadnames.txt',
+    input:
+        blacklist_fofn = reads_fn, # fake input on first pass
+        reads_fn = reads_fn,
+    params:
+        config_sh_fn = CONFIG_SH_FN,
+    shell: """
+        mkdir -p build_raw_rdb
+        cd build_raw_rdb
+        rel=..
+
+        input_reads_fn="$rel/{input.reads_fn}" \
+        input_blacklist_fofn="$rel/{input.blacklist_fofn}" \
+        params_config_sh_fn={params.config_sh_fn} \
+            ipa-task build_raw_rdb
+
+        ln -sf reads.rdb rawreads.rdb
+        ln -sf reads.full.rdb rawreads.full.rdb
+    """
+
+checkpoint ovlcns_raw_prepare:
+    output:
+        blockdir = directory('ovlcns_raw_prepare/block_ids')
+    input:
+        rdb = rules.build_raw_rdb.output.rdb,
+    shell: """
+        rm -f {output.blockdir}
+        mkdir -p {output.blockdir}
+        cd {output.blockdir}
+        rel=../..
+
+        output_blocks=./blocks \
+        input_rdb="$rel/{input.rdb}" \
+            ipa-task ovlcns_raw_prepare
+    """
+
+#def read_lines(fn):
+#    return [line.strip() for line in open(fn)]
+
+# Special way to glob outputs dynamically.
+# https://snakemake.readthedocs.io/en/stable/snakefiles/rules.html#data-dependent-conditional-execution
+# https://snakemake.readthedocs.io/en/stable/project_info/faq.html#how-do-i-run-my-rule-on-all-files-of-a-certain-directory
+#
+def gathered_ercreads_fasta(wildcards):
+    checkpoint_output = checkpoints.ovlcns_raw_prepare.get(**wildcards).output.blockdir  # raises until checkpoint is done
+    block_ids = glob_wildcards(os.path.join(checkpoint_output, "{block_id}.txt")).block_id
+    return expand("ovlcns_raw_run/{block_id}/ercreads.fasta",
+            block_id=block_ids)
+    
+
+rule ovlcns_raw_run:
+    output:
+        out_m4 = "ovlcns_raw_run/{block_id}/ovl.m4",
+        out_filtered_m4 = "ovlcns_raw_run/{block_id}/ovl.flipped.sorted.filtered.m4",
+        out_ercreads_fasta = "ovlcns_raw_run/{block_id}/ercreads.fasta",
+    input:
+        rdb = rules.build_raw_rdb.output.rdb,
+        length_cutoff_fn = rules.build_raw_rdb.output.cutoff,
+        #block_fn = "ovlcns_raw_prepare/block_ids/{block_id}.txt",
+    params:
+        num_threads = NUM_THREADS,
+        config_sh_fn = CONFIG_SH_FN,
+        #map_min_len = MAP_MIN_LEN,
+    shell: """
+        echo "block_id={wildcards.block_id}"
+        mkdir -p 'ovlcns_raw_run/{wildcards.block_id}'
+        cd 'ovlcns_raw_run/{wildcards.block_id}'
+        rel=../..
+
+        input_rdb="$rel/{input.rdb}" \
+        input_length_cutoff_fn="$rel/{input.length_cutoff_fn}" \
+        params_block_id={wildcards.block_id} \
+        params_num_threads={params.num_threads} \
+        params_config_sh_fn={params.config_sh_fn} \
+            ipa-task ovlcns_raw_run
+    """
+
+rule ovlcns_raw_merge:
+    output:
+        gathered_fofn = "ovlcns_raw_merge/ercreads.fofn",
+        gathered_fasta = "ovlcns_raw_merge/ercreads.fasta",
+    input:
+        fns = gathered_ercreads_fasta, # Array[File]
+    shell: """
+        mkdir -p ovlcns_raw_merge/
+        for fn in {input.fns}; do
+            echo $(readlink -f $fn)
+        done >| {output.gathered_fofn}
+        cat {input.fns} >| {output.gathered_fasta}
+    """
+
+rule build_erc_rdb:
+    output:
+        rdb = "build_erc_rdb/ercreads.rdb",
+    input:
+        reads = rules.ovlcns_raw_merge.output.gathered_fofn,
+    params:
+        config_sh_fn = CONFIG_SH_FN,
+    shell: """
+        mkdir -p build_erc_rdb
+        cd build_erc_rdb
+        rel=..
+
+        input_reads_fn="$rel/{input.reads}" \
+        params_db_prefix="ercreads" \
+        params_config_sh_fn={params.config_sh_fn} \
+            ipa-task build_erc_rdb
+    """
+
+checkpoint ovl_erc_prepare:
+    output:
+        blockdir = directory('ovl_erc_prepare/blockerc_ids')
+    input:
+        rdb = rules.build_erc_rdb.output.rdb,
+    shell: """
+        rm -f {output.blockdir}
+        mkdir -p {output.blockdir}
+        cd {output.blockdir}
+        rel=../..
+
+        output_blocks=./blocks \
+        input_rdb="$rel/{input.rdb}" \
+            ipa-task ovl_erc_prepare
+    """
+
+def gathered_ercreads_m4(wildcards):
+    checkpoint_output = checkpoints.ovl_erc_prepare.get(**wildcards).output.blockdir  # raises until checkpoint is done
+    blockerc_ids = glob_wildcards(os.path.join(checkpoint_output, "{blockerc_id}.txt")).blockerc_id
+    return expand("ovl_erc_run/{blockerc_id}/ovl.flipped.sorted.dovetail.m4",
+            blockerc_id=blockerc_ids)
+
+rule ovl_erc_run:
+    output:
+        out_m4 = "ovl_erc_run/{blockerc_id}/ovl.m4",
+        out_filtered_m4 = "ovl_erc_run/{blockerc_id}/ovl.flipped.sorted.dovetail.m4",
+        # In cromwell, the shard would not tell us the id. So we add id to filename.
+    input:
+        rdb = rules.build_erc_rdb.output.rdb,
+        #block_fn = "ovl_erc_prepare/block_ids/{blockerc_id}.txt",
+    params:
+        num_threads = config['pb_assembly_microbial.nproc'],
+        config_sh_fn = CONFIG_SH_FN,
+        #map_min_len = MAP_MIN_LEN,
+    shell: """
+        echo "blockerc_id={wildcards.blockerc_id}"
+        mkdir -p 'ovl_erc_run/{wildcards.blockerc_id}'
+        cd 'ovl_erc_run/{wildcards.blockerc_id}'
+        rel=../..
+
+        input_rdb="$rel/{input.rdb}" \
+        params_block_id={wildcards.blockerc_id} \
+        params_db_prefix=ercreads \
+        params_num_threads={params.num_threads} \
+        params_config_sh_fn={params.config_sh_fn} \
+            ipa-task ovl_erc_run
+    """
+
+rule ovl_erc_merge:
+    output:
+        gathered_m4 = "ovl_erc_merge/ercreads.ovl",
+    input:
+        fns = gathered_ercreads_m4,
+    params:
+        num_threads = config['pb_assembly_microbial.nproc'],
+        config_sh_fn = CONFIG_SH_FN,
+    shell: """
+        mkdir -p ovl_erc_merge
+        cd ovl_erc_merge/
+        rel=..
+
+        # We must change rel-path names when we chdir.
+        for fn in {input.fns}; do
+            echo $rel/$fn
+        done >| ./merged.fofn
+
+        input_fofn=./merged.fofn \
+        output_ovl="ercreads.ovl" \
+        params_num_threads="{params.num_threads}" \
+        params_db_prefix="ercreads" \
+        params_config_sh_fn={params.config_sh_fn} \
+            ipa-task ovl_erc_merge
+    """
+
+rule assemble:
+    output:
+        p_ctg_fa = "assemble/p_ctg.fasta",
+        a_ctg_fa = "assemble/a_ctg.fasta",
+        p_ctg_tiling_path = "assemble/p_ctg_tiling_path",
+        a_ctg_tiling_path = "assemble/a_ctg_tiling_path",
+        asm_gfa = "assemble/asm.gfa",
+        sg_gfa = "assemble/sg.gfa",
+        contig_gfa2 = "assemble/contig.gfa2",
+        circular_contigs = "assemble/circular_contigs.csv",
+    input:
+        m4 = rules.ovl_erc_merge.output.gathered_m4,
+        ercreads = rules.ovlcns_raw_merge.output.gathered_fasta,
+    params:
+        ctg_prefix = config["pb_assembly_microbial.ctg_prefix"],          # String
+        config_sh_fn = CONFIG_SH_FN,
+    shell: """
+        mkdir -p assemble/
+        cd assemble/
+        rel=..
+
+        input_m4="$rel/{input.m4}" \
+        input_ercreads="$rel/{input.ercreads}" \
+        params_ctg_prefix={params.ctg_prefix} \
+        params_config_sh_fn={params.config_sh_fn} \
+            ipa-task assemble
+    """
+
+rule finish:
+    input:
+        rules.assemble.output.p_ctg_fa,

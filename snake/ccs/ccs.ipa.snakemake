@@ -1,0 +1,172 @@
+import os
+print(f'CWD:{os.getcwd()}')
+
+CTG_PREFIX = "ctg.s1."
+READS_FN = config['reads_fn']
+NPROC = config['nproc']
+GENOME_SIZE = config['genome_size']
+COVERAGE = config['coverage']
+BLOCK_SIZE = config['block_size']
+OVL_OPT = config['ovl_opt']
+OVL_FLANK_GRACE = config['ovl_flank_grace']
+OVL_MIN_IDT = config['ovl_min_idt']
+OVL_MIN_LEN = config['ovl_min_len']
+OVL_FILTER_OPT = config['ovl_filter_opt']
+
+shell.prefix("set -vxeu -o pipefail; ")
+print(config)
+
+rule generate_config:
+    output:
+        config = "generate_config/config.sh"
+    input:
+        # Reads are not really used here, but just used to run the workflow
+        # when they become available.
+        reads_fn = READS_FN,
+    params:
+        genome_size = GENOME_SIZE,
+        coverage = COVERAGE,
+        block_size = BLOCK_SIZE,
+        ovl_opt = OVL_OPT,
+        ovl_flank_grace = OVL_FLANK_GRACE,
+        ovl_min_idt = OVL_MIN_IDT,
+        ovl_min_len = OVL_MIN_LEN,
+        ovl_filter_opt = OVL_FILTER_OPT,
+    shell: """
+        mkdir -p generate_config
+        cd generate_config
+        rel=..
+
+        params_genome_size="{params.genome_size}" \
+        params_coverage="{params.coverage}" \
+        params_block_size="{params.block_size}" \
+        params_ovl_opt="{params.ovl_opt}" \
+        params_ovl_flank_grace="{params.ovl_flank_grace}" \
+        params_ovl_min_idt="{params.ovl_min_idt}" \
+        params_ovl_min_len="{params.ovl_min_len}" \
+        params_ovl_filter_opt="{params.ovl_filter_opt}" \
+            time ipa-task generate_config_ccs
+    """
+
+rule build_erc_rdb:
+    output:
+        rdb = "build_erc_rdb/ercreads.rdb",
+    input:
+        reads_fn = READS_FN,
+        config_sh_fn = rules.generate_config.output.config,
+    shell: """
+        mkdir -p build_erc_rdb
+        cd build_erc_rdb
+        rel=..
+
+        input_reads_fn="{input.reads_fn}" \
+        params_db_prefix="ercreads" \
+        params_config_sh_fn="$rel/{input.config_sh_fn}" \
+            time ipa-task build_erc_rdb
+    """
+
+checkpoint ovl_erc_prepare:
+    output:
+        blockdir = directory('ovl_erc_prepare/blockerc_ids')
+    input:
+        rdb = rules.build_erc_rdb.output.rdb,
+    shell: """
+        rm -f {output.blockdir}
+        mkdir -p {output.blockdir}
+        cd {output.blockdir}
+        rel=../..
+
+        output_blocks=./blocks \
+        input_rdb="$rel/{input.rdb}" \
+            time ipa-task ovl_erc_prepare
+    """
+
+def gathered_ercreads_m4(wildcards):
+    checkpoint_output = checkpoints.ovl_erc_prepare.get(**wildcards).output.blockdir  # raises until checkpoint is done
+    blockerc_ids = glob_wildcards(os.path.join(checkpoint_output, "{blockerc_id}.txt")).blockerc_id
+    return expand("ovl_erc_run/{blockerc_id}/ovl.flipped.sorted.dovetail.m4",
+            blockerc_id=blockerc_ids)
+
+rule ovl_erc_run:
+    output:
+        out_m4 = "ovl_erc_run/{blockerc_id}/ovl.m4",
+        out_filtered_m4 = "ovl_erc_run/{blockerc_id}/ovl.flipped.sorted.dovetail.m4",
+        # In cromwell, the shard would not tell us the id. So we add id to filename.
+    input:
+        rdb = rules.build_erc_rdb.output.rdb,
+        config_sh_fn = rules.generate_config.output.config,
+        #block_fn = "ovl_erc_prepare/block_ids/{blockerc_id}.txt",
+    params:
+        num_threads = NPROC,
+        #map_min_len = MAP_MIN_LEN,
+    shell: """
+        echo "blockerc_id={wildcards.blockerc_id}"
+        mkdir -p 'ovl_erc_run/{wildcards.blockerc_id}'
+        cd 'ovl_erc_run/{wildcards.blockerc_id}'
+        rel=../..
+
+        input_rdb="$rel/{input.rdb}" \
+        params_block_id={wildcards.blockerc_id} \
+        params_db_prefix=ercreads \
+        params_num_threads={params.num_threads} \
+        params_config_sh_fn="$rel/{input.config_sh_fn}" \
+            time ipa-task ovl_erc_run
+    """
+
+rule ovl_erc_merge:
+    output:
+        gathered_m4 = "ovl_erc_merge/ercreads.ovl",
+    input:
+        fns = gathered_ercreads_m4,
+        config_sh_fn = rules.generate_config.output.config,
+    params:
+        num_threads = NPROC,
+    shell: """
+        mkdir -p ovl_erc_merge
+        cd ovl_erc_merge/
+        rel=..
+
+        # We must change rel-path names when we chdir.
+        for fn in {input.fns}; do
+            echo $rel/$fn
+        done >| ./merged.fofn
+
+        input_fofn=./merged.fofn \
+        output_ovl="ercreads.ovl" \
+        params_num_threads="{params.num_threads}" \
+        params_db_prefix="ercreads" \
+        params_config_sh_fn="$rel/{input.config_sh_fn}" \
+            time ipa-task ovl_erc_merge
+    """
+
+rule assemble:
+    output:
+        p_ctg_fa = "assemble/p_ctg.fasta",
+        a_ctg_fa = "assemble/a_ctg.fasta",
+        p_ctg_tiling_path = "assemble/p_ctg_tiling_path",
+        a_ctg_tiling_path = "assemble/a_ctg_tiling_path",
+        asm_gfa = "assemble/asm.gfa",
+        sg_gfa = "assemble/sg.gfa",
+        contig_gfa2 = "assemble/contig.gfa2",
+        circular_contigs = "assemble/circular_contigs.csv",
+    input:
+        m4 = rules.ovl_erc_merge.output.gathered_m4,
+        ercreads = READS_FN,
+        config_sh_fn = rules.generate_config.output.config,
+    params:
+        ctg_prefix = CTG_PREFIX,
+    shell: """
+        mkdir -p assemble/
+        cd assemble/
+        rel=..
+
+        input_m4="$rel/{input.m4}" \
+        input_ercreads="{input.ercreads}" \
+        params_ctg_prefix={params.ctg_prefix} \
+        params_config_sh_fn="$rel/{input.config_sh_fn}" \
+            time ipa-task assemble
+    """
+
+rule finish:
+    input:
+        rules.assemble.output.p_ctg_fa,
