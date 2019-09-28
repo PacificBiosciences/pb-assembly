@@ -1,0 +1,571 @@
+# "input_fofn" should name a file of CLR subreads.
+# (This is the same as fc_run.py in FALCON.)
+# (This is the same as our HGAP4 smrtlink workflow, without polishing.)
+
+shell.prefix("set -vxeu -o pipefail; ")
+print(config)
+general_config = config
+general_config_fn = os.path.relpath(config["config_fn"])
+input_fofn_fn = config["input_fofn"]
+if not os.path.isabs(input_fofn_fn)
+    # This variable can help if you use a relative path to the FOFN.
+    MAKEDIR = config["MAKEDIR"]
+    input_fofn_fn = os.path.relpath(os.path.join(MAKEDIR, config["input_fofn"]))
+
+
+rule build_raw_db:
+    output:
+        dazzler_db = "0-rawreads/build/raw_reads.db",
+        #dazzler_dust_anno = "0-rawreads/build/.raw_reads.dust.anno",
+        length_cutoff = "0-rawreads/build/length_cutoff",
+    input:
+        config = general_config_fn,
+        input_fofn = input_fofn_fn,
+    shell: """
+        mkdir -p 0-rawreads/build
+        cd 0-rawreads/build
+        rel=../..
+
+        python3 -m falcon_kit.mains.dazzler --config-fn=$rel/{input.config} --db-fn=$rel/{output.dazzler_db}  build --input-fofn-fn=$rel/{input.input_fofn} --length-cutoff-fn=$rel/{output.length_cutoff}
+    """
+
+rule raw_tan_split:
+    output:
+        bash_template = "0-rawreads/tan-split/bash_template.sh",
+        uows = "0-rawreads/tan-split/all-units-of-work.tar",
+    input:
+        config = general_config_fn,
+        dazzler_db = rules.build_raw_db.output.dazzler_db,
+        length_cutoff = rules.build_raw_db.output.length_cutoff,
+    params:
+        #skip_checks = int(general_config.get('skip_checks', 0)),
+        wildcards = 'tan0_id',
+        pypeflow_nproc = 1,
+    shell: """
+        mkdir -p 0-rawreads/tan-split
+        cd 0-rawreads/tan-split
+        rel=../..
+
+        python3 -m falcon_kit.mains.dazzler --config=$rel/{input.config} --db=$rel/{input.dazzler_db}                tan-split --split-fn=./all-units-of-work.json --bash-template-fn=$rel/{output.bash_template}
+        # Implicitly also write all-units-of-work.tar
+    """
+#python3 -m falcon_kit.mains.dazzler --config=$rel/{input.config} --db=$rel/{input.db} --nproc={params.pypeflow_nproc}  tan-split --wildcards={params.wildcards} --length-cutoff-fn=$rel/{input.length_cutoff} --split-fn=./all-units-of-work.json --bash-template-fn=$rel/{output.bash_template}
+
+checkpoint raw_tan_scatter:
+    output:
+        chunkdir = directory('0-rawreads/tan-chunks'),
+    input:
+        uows = rules.raw_tan_split.output.uows,
+    params:
+        max_nchunks = 256,
+    shell: """
+        mkdir -p 0-rawreads/tan-chunks
+        cd 0-rawreads/tan-chunks
+        rel=../..
+
+        python3 -m falcon_kit.mains.generic_scatter_uows_tar --all=$rel/{input.uows} --nchunks={params.max_nchunks} --pattern='./some-units-of-work.%.tar'
+    """
+
+def gathered_raw_tan(wildcards):
+    checkpoint_output = checkpoints.raw_tan_scatter.get(**wildcards).output.chunkdir  # raises until checkpoint is done
+    chunks = glob_wildcards(os.path.join(checkpoint_output, "some-units-of-work.{chunk}.tar")).chunk
+    return expand("0-rawreads/tan-runs/{chunk}/chunk_tan_anno_files.fofn",
+            chunk=chunks)
+
+rule raw_tan_apply:
+    output:
+        dazzler_tan_anno_fofn = "0-rawreads/tan-runs/{raw_tan_chunk}/chunk_tan_anno_files.fofn"
+        #dazzler_tan_data_fofn = "0-rawreads/tan-runs/{raw_tan_chunk}/chunk_tan_data_files.fofn"
+    input:
+        chunk = "0-rawreads/tan-chunks/some-units-of-work.{raw_tan_chunk}.tar",
+        config = general_config_fn,
+        dazzler_db = rules.build_raw_db.output.dazzler_db,
+        #dazzler_dust_anno = rules.build_raw_db.output.dazzler_dust_anno,
+    params:
+        nproc = 4
+    shell: """
+        mkdir -p 0-rawreads/tan-runs/{wildcards.raw_tan_chunk}
+        cd 0-rawreads/tan-runs/{wildcards.raw_tan_chunk}
+        rel=../../..
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps
+
+        python3 -m falcon_kit.mains.cromwell_run_uows_tar --nproc={params.nproc} --nproc-per-uow=4 --uows-tar-fn=$rel/{input.chunk} --tool=datander
+
+        find uow-* -name ".*.*.tan.anno" > chunk_tan_anno_files.fofn
+        find uow-* -name ".*.*.tan.data" > chunk_tan_data_files.fofn
+        #find `pwd`/uow-* -name ".*.*.tan.anno" > chunk_tan_anno_files.fofn
+        #find `pwd`/uow-* -name ".*.*.tan.data" > chunk_tan_data_files.fofn
+        #find . -name '.*.*.tan.anno' | xargs -I XXX mv -sf XXX dotXXX
+        #find . -name '.*.*.tan.data' | xargs -I XXX ln -sf XXX dotXXX
+        #ls -larth .
+        #Catrack -vdf raw_reads tan
+    """
+
+rule raw_tan_combine:
+    output:
+        #paths = "0-rawreads/tan-combine/merged-las-paths.json",
+        #chunkdir = directory('0-rawreads/tan-combine'),
+        dazzler_tan_anno = "0-rawreads/tan-combine/.raw_reads.tan.anno",
+        #dazzler_tan_data = "0-rawreads/tan-combine/.raw_reads.tan.data",
+    input:
+        anno_fofns = gathered_raw_tan,
+        config = general_config_fn,
+        dazzler_db = rules.build_raw_db.output.dazzler_db,
+        #Array[File] tan_anno_array_of_fofn
+        #Array[File] tan_data_array_of_fofn
+    params:
+        nproc = 1,
+    shell: """
+        mkdir -p 0-rawreads/tan-combine
+        cd 0-rawreads/tan-combine
+        rel=../..
+
+        anno_files_fn=anno_files.fofn
+        data_files_fn=data_files.fofn
+        rm -f $anno_files_fn
+        rm -f $data_files_fn
+
+        for fofn_fn in $rel/{input.anno_fofns}; do
+            while read fn; do
+                afn=$(dirname $fofn_fn)/$fn  # assuming relative fns in fofn
+                echo $afn >> $anno_files_fn
+                dfn="${{afn%.anno}}.data"
+                echo $dfn >> $data_files_fn
+            done < $fofn_fn
+        done
+        python3 -m falcon_kit.mains.cromwell_write_json --lines-fn=$anno_files_fn --json-fn=./gathered-anno.json
+        python3 -m falcon_kit.mains.cromwell_write_json --lines-fn=$data_files_fn --json-fn=./gathered-data.json
+
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+
+        #python3 -m falcon_kit.mains.cromwell_symlink $rel/{input.config}
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps
+        # $dbdir/.$db.dust.anno $dbdir/.$db.dust.data
+
+        python3 -m falcon_kit.mains.dazzler --config={input.config} --db=$db.db  track-combine --track tan --anno ./gathered-anno.json --data ./gathered-data.json
+        # Note: track-combine, not tan-combine, which was for the UOW workflow
+
+        # Symlink into DB build-dir, because that is how Dazzler tools like to work.
+        # (This would not work in the cloud.)
+        #ln -s $(pwd)/.raw_reads.tan.anno $dbdir
+        #ln -s $(pwd)/.raw_reads.tan.data $dbdir
+        # That did not really solve the problem, but maybe someday we will try again.
+    """
+
+rule raw_daligner_split:
+    output:
+        #split = "0-rawreads/daligner-split/all-units-of-work.json",
+        bash_template = "0-rawreads/daligner-split/bash_template.sh",
+        uows = "0-rawreads/daligner-split/all-units-of-work.tar",
+    input:
+        config = general_config_fn,
+        dazzler_db = rules.build_raw_db.output.dazzler_db,
+        dazzler_tan_anno = rules.raw_tan_combine.output.dazzler_tan_anno,
+        length_cutoff = rules.build_raw_db.output.length_cutoff,
+    params:
+        skip_checks = int(general_config.get('skip_checks', 0)),
+        wildcards = 'dal0_id',
+        pypeflow_nproc = 1,
+    shell: """
+        mkdir -p 0-rawreads/daligner-split
+        cd 0-rawreads/daligner-split
+        rel=../..
+
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+        tandir=$(dirname $rel/{input.dazzler_tan_anno})
+
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps $dbdir/.$db.dust.anno $dbdir/.$db.dust.data $tandir/.$db.tan.anno $tandir/.$db.tan.data
+
+        python3 -m falcon_kit.mains.dazzler --config=$rel/{input.config} --db=$rel/{input.dazzler_db} --nproc={params.pypeflow_nproc}  daligner-split --wildcards={params.wildcards} --length-cutoff-fn=$rel/{input.length_cutoff} --split-fn=./all-units-of-work.json --bash-template-fn=$rel/{output.bash_template}
+        # Implicitly also write all-units-of-work.tar
+    """
+
+checkpoint raw_daligner_scatter:
+    output:
+        chunkdir = directory('0-rawreads/daligner-chunks'),
+    input:
+        uows = rules.raw_daligner_split.output.uows,
+    params:
+        max_nchunks = 256,
+    shell: """
+        mkdir -p 0-rawreads/daligner-chunks
+        cd 0-rawreads/daligner-chunks
+        rel=../..
+
+        python3 -m falcon_kit.mains.generic_scatter_uows_tar --all=$rel/{input.uows} --nchunks={params.max_nchunks} --pattern='./some-units-of-work.%.tar'
+    """
+
+def gathered_raw_daligner(wildcards):
+    checkpoint_output = checkpoints.raw_daligner_scatter.get(**wildcards).output.chunkdir  # raises until checkpoint is done
+    chunks = glob_wildcards(os.path.join(checkpoint_output, "some-units-of-work.{chunk}.tar")).chunk
+    return expand("0-rawreads/daligner-runs/{chunk}/chunk_las_files.fofn",
+            chunk=chunks)
+
+rule raw_daligner_apply:
+    output:
+        fofn = "0-rawreads/daligner-runs/{raw_daligner_chunk}/chunk_las_files.fofn",
+    input:
+        chunk = "0-rawreads/daligner-chunks/some-units-of-work.{raw_daligner_chunk}.tar",
+        config = general_config_fn,
+        dazzler_db = rules.build_raw_db.output.dazzler_db,
+        #dazzler_dust_anno = rules.build_raw_db.output.dazzler_dust_anno,
+        dazzler_tan_anno = rules.raw_tan_combine.output.dazzler_tan_anno,
+    params:
+        nproc = 4,
+    shell: """
+        mkdir -p 0-rawreads/daligner-runs/{wildcards.raw_daligner_chunk}
+        cd 0-rawreads/daligner-runs/{wildcards.raw_daligner_chunk}
+        rel=../../..
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+        tandir=$(dirname $rel/{input.dazzler_tan_anno})
+
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps $dbdir/.$db.dust.anno $dbdir/.$db.dust.data $tandir/.$db.tan.anno $tandir/.$db.tan.data
+
+        python3 -m falcon_kit.mains.cromwell_run_uows_tar --nproc={params.nproc} --nproc-per-uow=4 --uows-tar-fn=$rel/{input.chunk} --tool=daligner
+        find `pwd`/uow-* -name "*.las" > chunk_las_files.fofn
+    """
+
+checkpoint raw_daligner_las_merge:
+    output:
+        #paths = "0-rawreads/daligner-las-merge/merged-las-paths.json",
+        chunkdir = directory('0-rawreads/daligner-las-merge'),
+    input:
+        fofns = gathered_raw_daligner,
+        config = general_config_fn,
+    params:
+        nproc = 1,
+    shell: """
+        mkdir -p 0-rawreads/daligner-las-merge
+        cd 0-rawreads/daligner-las-merge
+        rel=../..
+
+        echo {input.fofns}
+
+        files_fn=las_files.fofn
+        rm -f $files_fn
+
+        for fn in {input.fofns}; do
+            cat $rel/$fn >> $files_fn
+        done
+        python3 -m falcon_kit.mains.cromwell_write_json --lines-fn=$files_fn --json-fn=./gathered-las.json
+
+        python3 -m falcon_kit.mains.cromwell_symlink $rel/{input.config}
+
+        python3 -m falcon_kit.mains.dazzler --config=$(basename {input.config})                  merge-split --db-prefix=raw_reads --las-paths=./gathered-las.json --wildcards=mer0_id --split-fn=all-units-of-work.json --bash-template-fn=las-merge-bash-template.sh
+
+        python3 -m falcon_kit.mains.generic_run_units_of_work --nproc={params.nproc} --bash-template-fn=./las-merge-bash-template.sh --units-of-work-fn=./all-units-of-work.json --results-fn=./merged-las-paths.json
+
+        for fn in uow-*/*.las; do
+            ln -sf $fn .
+        done
+    """
+
+def gathered_raw_cns_run(wildcards):
+    checkpoint_output = checkpoints.raw_daligner_las_merge.get(**wildcards).output.chunkdir  # raises until checkpoint is done
+    chunks = glob_wildcards(os.path.join(checkpoint_output, "raw_reads.{chunk}.las")).chunk
+    return expand("0-rawreads/cns-runs/{chunk}/consensus.chunk.fasta",
+            chunk=chunks)
+
+rule raw_cns_run:
+    output:
+        fasta = "0-rawreads/cns-runs/{raw_cns_chunk}/consensus.chunk.fasta",
+    input:
+        las = "0-rawreads/daligner-las-merge/raw_reads.{raw_cns_chunk}.las",
+        config = general_config_fn,
+        dazzler_db = rules.build_raw_db.output.dazzler_db,
+        length_cutoff = rules.build_raw_db.output.length_cutoff,
+    params:
+        nproc = 8,
+    shell: """
+        mkdir -p 0-rawreads/cns-runs/{wildcards.raw_cns_chunk}
+        cd 0-rawreads/cns-runs/{wildcards.raw_cns_chunk}
+        rel=../../..
+
+        #db=$(basename {input.dazzler_db} .db)
+        #dbdir=$(dirname $rel/{input.dazzler_db})
+
+        #python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps # $rel/{input.length_cutoff} $rel/{input.las} $rel/{input.config}
+
+        python3 -m falcon_kit.mains.consensus_task --nproc={params.nproc} --las-fn=$rel/{input.las} --db-fn=$rel/{input.dazzler_db} --length-cutoff-fn=$rel/{input.length_cutoff} --config-fn=$rel/{input.config} --fasta-fn=consensus.chunk.fasta
+    """
+
+rule raw_cns_gather:
+    output:
+        preads_fofn = "0-rawreads/cns-gather/preads.fofn",
+    input:
+        fasta_array = gathered_raw_cns_run,
+    run:
+        dn = os.path.dirname(output.preads_fofn)
+        with open(output.preads_fofn, 'w') as ofs:
+            for fn in input.fasta_array:
+                rfn = os.path.relpath(fn, dn)
+                ofs.write(rfn + '\n')
+#    shell: """
+#        files_fn={output.preads_fofn}
+#        rm -f $files_fn
+#        for fn in {input.fasta_array}; do
+#            echo os.path.relpath($fn) >> $files_fn
+#        done
+#    """
+
+rule raw_report:
+    output:
+        stats = "0-rawreads/raw-report/pre_assembly_stats.json",
+        report = "0-rawreads/raw-report/preassembly.report.json",
+    input:
+        config = general_config_fn,
+        preads_fofn = rules.raw_cns_gather.output.preads_fofn,
+        dazzler_db = rules.build_raw_db.output.dazzler_db,
+        length_cutoff = rules.build_raw_db.output.length_cutoff,
+    shell: """
+        mkdir -p 0-rawreads/raw-report
+        cd 0-rawreads/raw-report
+        rel=../..
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps # $rel/{input.length_cutoff} $rel/{input.config}
+
+        python3 -m falcon_kit.mains.task_report_pre_assembly --config-fn=$rel/{input.config} --length-cutoff-fn=$rel/{input.length_cutoff} --raw-reads-db-fn=$db --preads-fofn-fn=$files_fn --pre-assembly-report-fn=./pre_assembly_stats.json
+
+        python -m pbreports.report.preassembly pre_assembly_stats.json ./preassembly.report.json
+    """
+
+rule build_preads_db:
+    output:
+        dazzler_db = "1-preads_ovl/build/preads.db",
+        #dazzler_dust_anno = "1-preads_ovl/build/.preads.dust.anno",
+        length_cutoff = "1-preads_ovl/build/length_cutoff",
+    input:
+        config = general_config_fn,
+        input_fofn = rules.raw_cns_gather.output.preads_fofn,
+    shell: """
+        mkdir -p 1-preads_ovl/build
+        cd 1-preads_ovl/build
+        rel=../..
+
+        python3 -m falcon_kit.mains.dazzler --config-fn=$rel/{input.config} --db-fn=$rel/{output.dazzler_db}  build --input-fofn-fn=$rel/{input.input_fofn} --length-cutoff-fn=$rel/{output.length_cutoff}
+    """
+
+rule preads_daligner_split:
+    output:
+        #split = "1-preads_ovl/daligner-split/all-units-of-work.json",
+        bash_template = "1-preads_ovl/daligner-split/bash_template.sh",
+        uows = "1-preads_ovl/daligner-split/all-units-of-work.tar",
+    input:
+        config = general_config_fn,
+        db = rules.build_preads_db.output.dazzler_db,
+        length_cutoff = rules.build_preads_db.output.length_cutoff,
+    params:
+        skip_checks = int(general_config.get('skip_checks', 0)),
+        wildcards = 'dal0_id',
+        pypeflow_nproc = 1,
+    shell: """
+        mkdir -p 1-preads_ovl/daligner-split
+        cd 1-preads_ovl/daligner-split
+        rel=../..
+
+        python3 -m falcon_kit.mains.dazzler --config=$rel/{input.config} --db=$rel/{input.db} --nproc={params.pypeflow_nproc}  daligner-split --wildcards={params.wildcards} --length-cutoff-fn=$rel/{input.length_cutoff} --split-fn=./all-units-of-work.json --bash-template-fn=$rel/{output.bash_template}
+        # Implicitly also write all-units-of-work.tar
+    """
+
+checkpoint preads_daligner_scatter:
+    output:
+        chunkdir = directory('1-preads_ovl/daligner-chunks'),
+    input:
+        uows = rules.preads_daligner_split.output.uows,
+    params:
+        max_nchunks = 256,
+    shell: """
+        mkdir -p 1-preads_ovl/daligner-chunks
+        cd 1-preads_ovl/daligner-chunks
+        rel=../..
+
+        python3 -m falcon_kit.mains.generic_scatter_uows_tar --all=$rel/{input.uows} --nchunks={params.max_nchunks} --pattern='./some-units-of-work.%.tar'
+    """
+
+def gathered_preads_daligner(wildcards):
+    checkpoint_output = checkpoints.preads_daligner_scatter.get(**wildcards).output.chunkdir  # raises until checkpoint is done
+    chunks = glob_wildcards(os.path.join(checkpoint_output, "some-units-of-work.{chunk}.tar")).chunk
+    return expand("1-preads_ovl/daligner-runs/{chunk}/chunk_las_files.fofn",
+            chunk=chunks)
+
+rule preads_daligner_apply:
+    output:
+        fofn = "1-preads_ovl/daligner-runs/{preads_daligner_chunk}/chunk_las_files.fofn",
+    input:
+        chunk = "1-preads_ovl/daligner-chunks/some-units-of-work.{preads_daligner_chunk}.tar",
+        config = general_config_fn,
+        dazzler_db = rules.build_preads_db.output.dazzler_db,
+        #dazzler_dust_anno = rules.build_preads_db.output.dazzler_dust_anno,
+    params:
+        nproc = 4,
+    shell: """
+        mkdir -p 1-preads_ovl/daligner-runs/{wildcards.preads_daligner_chunk}
+        cd 1-preads_ovl/daligner-runs/{wildcards.preads_daligner_chunk}
+        rel=../../..
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps $dbdir/.$db.dust.anno $dbdir/.$db.dust.data
+
+        python3 -m falcon_kit.mains.cromwell_run_uows_tar --nproc={params.nproc} --nproc-per-uow=4 --uows-tar-fn=$rel/{input.chunk} --tool=daligner
+        find `pwd`/uow-* -name "*.las" > chunk_las_files.fofn
+    """
+
+rule preads_daligner_las_merge:
+    output:
+        #paths = "1-preads_ovl/daligner-las-merge/merged-las-paths.json",
+        fofn = "1-preads_ovl/daligner-las-merge/las-merged-files.fofn",
+        #chunkdir = directory('1-preads_ovl/daligner-las-merge'),
+    input:
+        fofns = gathered_preads_daligner,
+        config = general_config_fn,
+    params:
+        nproc = 1,
+    shell: """
+        mkdir -p 1-preads_ovl/daligner-las-merge
+        cd 1-preads_ovl/daligner-las-merge
+        rel=../..
+
+        echo {input.fofns}
+
+        files_fn=las_files.fofn
+        rm -f $files_fn
+
+        for fn in {input.fofns}; do
+            cat $rel/$fn >> $files_fn
+        done
+        python3 -m falcon_kit.mains.cromwell_write_json --lines-fn=$files_fn --json-fn=./gathered-las.json
+
+        python3 -m falcon_kit.mains.cromwell_symlink $rel/{input.config}
+
+        python3 -m falcon_kit.mains.dazzler --config=$(basename {input.config})                  merge-split --db-prefix=preads --las-paths=./gathered-las.json --wildcards=mer0_id --split-fn=all-units-of-work.json --bash-template-fn=las-merge-bash-template.sh
+
+        python3 -m falcon_kit.mains.generic_run_units_of_work --nproc={params.nproc} --bash-template-fn=./las-merge-bash-template.sh --units-of-work-fn=./all-units-of-work.json --results-fn=./merged-las-paths.json
+
+        #for fn in uow-*/*.las; do
+        #    ln -sf $fn .
+        #done
+
+        find `pwd`/uow-* -name "*.las" > $rel/{output.fofn}
+    """
+
+#def gathered_preads_cns_run(wildcards):
+#    checkpoint_output = checkpoints.raw_daligner_las_merge.get(**wildcards).output.chunkdir  # raises until checkpoint is done
+#    chunks = glob_wildcards(os.path.join(checkpoint_output, "raw_reads.{chunk}.las")).chunk
+#    return expand("0-rawreads/cns-runs/{chunk}/consensus.chunk.fasta",
+#            chunk=chunks)
+
+rule preads_db2falcon:
+    output:
+        preads4falcon_fasta = '1-preads_ovl/db2falcon/preads4falcon.fasta',
+    input:
+        dazzler_db = rules.build_preads_db.output.dazzler_db,
+    shell: """
+        mkdir -p 1-preads_ovl/db2falcon
+        cd 1-preads_ovl/db2falcon
+        rel=../..
+
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps
+        time DB2Falcon -U $dbdir/$db.db
+        [ -f ./preads4falcon.fasta ] || exit 1
+    """
+
+rule asm_falcon:
+    output:
+        p_ctg_fasta = "2-asm-falcon/p_ctg.fasta",
+        a_ctg_fasta = "2-asm-falcon/a_ctg.fasta",
+    input:
+        dazzler_db = rules.build_preads_db.output.dazzler_db,
+        preads4falcon_fasta = rules.preads_db2falcon.output.preads4falcon_fasta,
+        las_fofn = rules.preads_daligner_las_merge.output.fofn,
+    params:
+        length_cutoff_pr = int(general_config.get('length_cutoff_pr', 0)),
+        overlap_filtering_setting = general_config.get('overlap_filtering_setting', ''),
+        fc_ovlp_to_graph_option = general_config.get('fc_ovlp_to_graph_option', ''),
+        nproc = 4
+    shell: """
+        mkdir -p 2-asm-falcon
+        cd 2-asm-falcon
+        rel=..
+
+        db=$(basename {input.dazzler_db} .db)
+        dbdir=$(dirname $rel/{input.dazzler_db})
+
+        python3 -m falcon_kit.mains.cromwell_symlink $dbdir/$db.db $dbdir/.$db.idx $dbdir/.$db.bps $rel/{input.preads4falcon_fasta}
+
+        files_fn="$rel/{input.las_fofn}"
+        python3 -m falcon_kit.mains.cromwell_write_json --lines-fn=$files_fn --json-fn=./las-fofn.json
+
+        # Given, las_fofn.json,
+        # write preads.ovl:
+
+        #overlap_filtering_setting='--max-diff 10000 --max-cov 100000 --min-cov 1 --min-len 1 --bestn 1000 --n-core 0'
+        #length_cutoff_pr='1'
+
+        falconc m4filt-falconRunner -n {params.nproc} --db $dbdir/$db.db --las-json ./las-fofn.json --min-len {params.length_cutoff_pr} --out ./preads.m4 --filter-log ./filter.log
+        cat filter.log
+
+        cat >| multiple-python-calls.sh << EOF
+
+        # Given preads.m4,
+        # write sg_edges_list, c_path, utg_data, ctg_paths.
+        #fc_ovlp_to_graph_option='--min-len 1'
+        time python3 -m falcon_kit.mains.ovlp_to_graph {params.fc_ovlp_to_graph_option} --overlap-file preads.m4 >| fc_ovlp_to_graph.log
+
+        # Given sg_edges_list, utg_data, ctg_paths, preads4falcon.fasta,
+        # write p_ctg.fasta and a_ctg_all.fasta,
+        # plus a_ctg_base.fasta, p_ctg_tiling_path, a_ctg_tiling_path, a_ctg_base_tiling_path:
+        time python3 -m falcon_kit.mains.graph_to_contig
+
+        # Given a_ctg_all.fasta, write a_ctg.fasta:
+        time python3 -m falcon_kit.mains.dedup_a_tigs >| a_ctg.fasta
+
+        # Given a_ctg.fasta and a_ctg_all_tiling_path, write a_ctg_tiling_path:
+        time python3 -m falcon_kit.mains.dedup_a_tp >| a_ctg_tiling_path
+
+        # Collect all info needed to format the GFA-1 and GFA-2 representations of
+        # the assembly graphs.
+        time python3 -m falcon_kit.mains.collect_pread_gfa --preads-ovl preads.m4 >| asm.gfa.json
+        time python3 -m falcon_kit.mains.collect_pread_gfa --preads-ovl preads.m4 --add-string-graph >| sg.gfa.json
+        time python3 -m falcon_kit.mains.collect_contig_gfa >| contig.gfa.json
+
+        # Output the assembly pread graph.
+        time python3 -m falcon_kit.mains.gen_gfa_v1 asm.gfa.json >| asm.gfa
+        time python3 -m falcon_kit.mains.gen_gfa_v2 asm.gfa.json >| asm.gfa2
+
+        # Output the string graph.
+        time python3 -m falcon_kit.mains.gen_gfa_v1 sg.gfa.json >| sg.gfa
+        time python3 -m falcon_kit.mains.gen_gfa_v2 sg.gfa.json >| sg.gfa2
+
+        # Output the contig graph with associate contigs attached to each primary contig.
+        time python3 -m falcon_kit.mains.gen_gfa_v2 contig.gfa.json >| contig.gfa2
+
+EOF
+
+        python3 -m falcon_kit.mains.run_python_modules multiple-python-calls.sh
+
+        #rm -f ./preads4falcon.fasta
+"""
+
+rule finish:
+    input:
+        rules.build_raw_db.output.dazzler_db,
+        rules.build_preads_db.output.dazzler_db,
+        #rules.preads_daligner_las_merge.output.chunkdir,
+        #rules.preads_db2falcon.output.preads4falcon_fasta,
+        #rules.asm_falcon.output.p_ctg_fasta,
+        rules.raw_tan_combine.output.dazzler_tan_anno,
+
+
+localrules: finish, raw_tan_split, raw_tan_scatter, raw_tan_combine, raw_daligner_split, raw_daligner_scatter, preads_daligner_split, preads_daligner_scatter
