@@ -27,7 +27,7 @@ rule polish:
      output: "polishing/{name}/{name}.polished.fa"
      params: RCPU=config['polish_cpu']
      shell: """
-	    if [-s {input.SEQUENCES}]
+	    if [ -s {input.SEQUENCES} ]
 	    then
 	     	    racon -u -t {params.RCPU} {input.SEQUENCES} {input.OVERLAPS} {input.TARGET} > {output}
 	    else
