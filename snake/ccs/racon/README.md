@@ -3,6 +3,7 @@ You need the following tools in your path:
 - RACON
 - PBMM2
 - SAMTOOLS
+You can just load pb-assembly and you'll have all the dependencies.
 
 #Setup
 Modify the config.json. Make sure the CPU settings agree between the config and cluster config. Total CPUs for PBMM2 are split by sorting and aligning
