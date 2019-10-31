@@ -1,0 +1,10 @@
+{
+    "fa"      : "ref.fasta",
+    "fai"     : "ref.fasta.fai",
+    "fq_fofn" : "input.fofn", 
+    "map_cpu"    : 2,
+    "sort_cpu"   : 2,
+    "polish_cpu" : 4,
+    "racon"      : "racon",
+    "pbmm2"      : "pbmm2"
+}

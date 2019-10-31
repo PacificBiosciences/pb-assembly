@@ -1,0 +1,501 @@
+# How to run this:
+#   snakemake -np -d RUN/ -s clr.snakemake --configfile config.json --config MAKEDIR=.. -- finish
+# where MAKEDIR is the relative path to the invocation direction from the RUN directory.
+# (snakemake unfortunately does not tell us the directory of --configfile.)
+
+from pathlib import Path
+import os, copy, json
+###configfile: "../config.json"  # Prefer --configfile=
+NUM_THREADS = config['pb_assembly_microbial.nproc'],
+
+EMPTY_FOFN='empty.fofn'
+with open(EMPTY_FOFN, 'w') as sout:
+    sout.write('')
+
+# IPA_SNAKE_FN = '/pbi/flash/cdunn/repo/ipa/workflow/clr/snake/clr.ipa.snakemake'
+IPA_SNAKE_DIR = os.environ.get("IPA_SNAKE_DIR").split()[0]
+IPA_SNAKE_FN = os.path.join(IPA_SNAKE_DIR, 'clr.ipa.snakemake')
+CWD = os.environ.get("CWD").split()[0]
+
+shell.prefix("set -vxeu -o pipefail; ")
+
+MAX_NCHUNKS_POLISHING = 24
+reads_fn = os.path.join(config['MAKEDIR'], config['pb_assembly_microbial.eid_subread'])
+# Note: must be relative, for now.
+
+all_config = copy.copy(config)
+#all_config['blacklist_fofn'] = os.path.relpath(EMPTY_FOFN, 'RUN-chr')
+all_config["pb_assembly_microbial.ctg_prefix"] = 'ctg.s1.'
+
+all_config_fn = os.path.join(config['MAKEDIR'], 'all-configfile.json')
+with open(all_config_fn, 'w') as sout:
+    sout.write(json.dumps(all_config, indent=2, separators=(',', ': '), sort_keys=True))
+
+LENGTH_CUTOFF = all_config["pb_assembly_microbial.microasm_length_cutoff"]
+GENOME_SIZE = all_config["pb_assembly_microbial.microasm_genome_size"]
+COVERAGE = all_config["pb_assembly_microbial.microasm_coverage"]
+PLASMID_CONTIG_LEN_MAX = all_config["pb_assembly_microbial.microasm_plasmid_contig_len_max"]
+ADVANCED_OPTIONS = all_config["pb_assembly_microbial.microasm_advanced_options"]
+NPROC = config['pb_assembly_microbial.nproc']
+
+print('PLASMID_CONTIG_LEN_MAX = {}'.format(PLASMID_CONTIG_LEN_MAX))
+print('LENGTH_CUTOFF = {}'.format(LENGTH_CUTOFF))
+print('GENOME_SIZE = {}'.format(GENOME_SIZE))
+print('COVERAGE = {}'.format(COVERAGE))
+print('ADVANCED_OPTIONS = {}'.format(ADVANCED_OPTIONS))
+print('NPROC = {}'.format(NPROC))
+
+rule generate_config:
+    output:
+        config_stage1_sh_fn = "generate_config/generated.config.stage1.bash",
+        config_stage1_json_fn = "generate_config/generated.config.stage1.json",
+        config_stage2_sh_fn = "generate_config/generated.config.stage2.bash",
+        config_stage2_json_fn = "generate_config/generated.config.stage2.json",
+    input:
+        # Not sure if a workflow can have zero inputs.
+        snake_fn=IPA_SNAKE_FN,
+    params:
+        length_cutoff = LENGTH_CUTOFF,
+        genome_size = GENOME_SIZE,
+        coverage = COVERAGE,
+        plasmid_contig_len_max = PLASMID_CONTIG_LEN_MAX,
+        advanced_opt_str = ADVANCED_OPTIONS,
+    shell: """\
+        mkdir -p generate_config/
+        cd generate_config/
+        rel=..
+
+        params_length_cutoff="{params.length_cutoff}" \
+        params_genome_size="{params.genome_size}" \
+        params_coverage="{params.coverage}" \
+        params_max_plasmid_len="{params.plasmid_contig_len_max}" \
+        params_advanced_opt="{params.advanced_opt_str}" \
+            ipa-task generate_config ipa-task
+    """
+
+rule assemble_chr:
+    output:
+        p_ctg_fa='RUN-chr/assemble/p_ctg.fasta',
+        contig_gfa2 = 'RUN-chr/assemble/contig.gfa2',
+        circular_contigs = 'RUN-chr/assemble/circular_contigs.csv',
+        #all_subreadnames='RUN-chr/build_raw_rdb/all-subreadnames.txt',
+        rdb_full = 'RUN-chr/build_raw_rdb/reads.full.rdb',
+    input:
+        snake_fn=IPA_SNAKE_FN,
+        config_sh_fn = rules.generate_config.output.config_stage1_sh_fn,
+    params:
+        config_fn=all_config_fn,
+    shell: """
+        rel=../../
+        echo "pwd = $(pwd)"
+        CONFIG_SH_FN="$(pwd)/{input.config_sh_fn}" snakemake --verbose -p -d RUN-chr -s {input.snake_fn} --configfile {params.config_fn} --config MAKEDIR=../.. -- finish
+    """
+
+rule filter_draft_contigs:
+    output:
+        p_ctg_filtered_fa = "filter_draft_contigs/p_ctg_filtered.fa",
+    input:
+        #p_ctg_fa = rules.assemble.output.p_ctg_fa,
+        p_ctg_fa = rules.assemble_chr.output.p_ctg_fa,
+        config_sh_fn = rules.generate_config.output.config_stage1_sh_fn,
+    params:
+        min_len = PLASMID_CONTIG_LEN_MAX,
+    shell: """
+        mkdir -p filter_draft_contigs
+        cd filter_draft_contigs
+        rel=..
+
+        input_fasta="$rel/{input.p_ctg_fa}" \
+        output_fasta="$rel/{output.p_ctg_filtered_fa}" \
+        params_min_len={params.min_len} \
+        params_config_sh_fn="$rel/{input.config_sh_fn}" \
+            ipa-task filter_draft_contigs
+    """
+
+rule create_datasets:
+    output:
+        subreadset_xml = "create_datasets/raw.subreadset.xml",
+        contigset_xml = "create_datasets/contigs.referenceset.xml",
+    input:
+        p_ctg_fa = rules.filter_draft_contigs.output.p_ctg_filtered_fa,
+        #p_ctg_fa = rules.assemble.output.p_ctg_fa,
+        #a_ctg_fa = rules.assemble.output.a_ctg_fa,
+        reads_fofn=reads_fn,
+    shell: """
+        mkdir -p create_datasets/
+        cd create_datasets/
+        rel=..
+
+        input_fasta="$rel/{input.p_ctg_fa}" \
+        input_reads="$rel/{input.reads_fofn}" \
+            ipa-task create_datasets
+    """
+rule mapping:
+    output:
+        mapped = "mapping/mapped.xml",
+        #mapped_fofn = "mapping/mapped.fofn",
+
+        #mapped = gather_alignments.gathered,
+        #mapped_fofn = gather_alignments.gathered_fofn,
+        #coverage_gff = summarize_coverage.coverage_gff,
+        #report_mapping_stats = mapping_stats.report,
+        #report_coverage = coverage_report.report,
+    input:
+        reads = rules.create_datasets.output.subreadset_xml,
+        reference = rules.create_datasets.output.contigset_xml,
+    params:
+        aln_ext = ".alignmentset.xml",
+        #mapping_stats_module = "mapping_stats_hgap",
+        #coverage_report_module = "coverage_hgap",
+        biosample_name = "Biosample",
+        min_concordance = 0.80,
+        min_length = 500,
+        nproc = NUM_THREADS,
+        max_nchunks = MAX_NCHUNKS_POLISHING,
+        log_level = "INFO",
+        hq_mode = "",
+        zmw_mode = "",
+        preset_mode = "",
+    shell: """
+        mkdir -p mapping/
+        cd mapping/
+        rel='..'
+        unmapped=$rel/{input.reads}
+
+        if [[ "true" == "{params.zmw_mode}" ]]; then
+            zmw_mode_flag="--zmw"
+        else
+            zmw_mode_flag=""
+        fi
+        if [[ "true" == "{params.hq_mode}" ]]; then
+            hq_mode_flag="--hqregion"
+        else
+            hq_mode_flag=""
+        fi
+        if [[ -n "{params.preset_mode}" ]]; then
+            preset_mode_flag="--preset"
+        else
+            preset_mode_flag=""
+        fi
+
+        pbmm2 \
+      align \
+      $rel/{input.reference} \
+      $unmapped \
+      mapped{params.aln_ext} \
+      --sort \
+      --min-concordance-perc {params.min_concordance} \
+      --min-length {params.min_length} \
+      --sample "{params.biosample_name}" \
+      $hq_mode_flag \
+      $zmw_mode_flag \
+      $preset_mode_flag \
+      -j {params.nproc} \
+      --log-level {params.log_level}
+
+        ln -f mapped{params.aln_ext} mapped.xml
+        echo $(pwd)/mapped.xml >| mapped.fofn
+    """
+
+rule get_unaligned_reads_from_dataset:
+    output:
+        #gathered_fofn = "bams.fofn",
+        exclude_subreads_fofn = "unaligned/exclude-subreads.txt"
+    input:
+        #dataset = rules.create_datasets.output.subreadset_xml,
+        dataset = rules.mapping.output.mapped,
+        config_sh_fn = rules.generate_config.output.config_stage1_sh_fn,
+        #all_subreadnames = rules.assemble_chr.output.all_subreadnames
+    shell: """
+        mkdir -p unaligned/
+        cd unaligned/
+        rel=..
+
+        input_dataset="$rel/{input.dataset}" \
+        params_config_sh_fn="$rel/{input.config_sh_fn}" \
+            ipa-task get_unaligned_reads_from_dataset
+    """
+
+
+plasmid_config = copy.copy(config)
+plasmid_config["pb_assembly_microbial.ctg_prefix"] = 'ctg.s2.'
+plasmid_config['blacklist_fofn'] = os.path.relpath('unaligned/exclude-subreads.txt', 'RUN-plasmid')
+plasmid_config_fn = os.path.join(config['MAKEDIR'], 'plasmid-configfile.json')
+with open(plasmid_config_fn, 'w') as sout:
+    sout.write(json.dumps(plasmid_config, indent=2, separators=(',', ': '), sort_keys=True))
+
+rule assemble_plasmid:
+    output:
+        p_ctg_fa = 'RUN-plasmid/assemble/p_ctg.fasta',
+        contig_gfa2 = 'RUN-plasmid/assemble/contig.gfa2',
+        circular_contigs = "RUN-plasmid/assemble/circular_contigs.csv",
+    input:
+        snake_fn = IPA_SNAKE_FN,
+        config_sh_fn = rules.generate_config.output.config_stage2_sh_fn,
+        blacklist_fn = 'unaligned/exclude-subreads.txt'
+    params:
+        config_fn=plasmid_config_fn,
+    shell: """
+        CONFIG_SH_FN="$(pwd)/{input.config_sh_fn}" snakemake --verbose -p -d RUN-plasmid -s {input.snake_fn} --configfile {params.config_fn} --config MAKEDIR=../.. -- finish
+    """
+
+rule dedup_plasmids:
+    output:
+        out_ctgs = 'dedup_plasmids/deduped_plasmid_ctgs.fasta',
+    input:
+        chr_contigs = rules.filter_draft_contigs.output.p_ctg_filtered_fa,
+        plasmid_contigs = rules.assemble_plasmid.output.p_ctg_fa,
+        config_sh_fn = rules.generate_config.output.config_stage1_sh_fn,
+    params:
+        max_plasmid_len = PLASMID_CONTIG_LEN_MAX,
+        #max_plasmid_len = plasmid_contig_len_max,
+    shell: """
+        mkdir -p dedup_plasmids
+        cd dedup_plasmids
+        rel=..
+
+        output_deduped_contigs_fa=deduped_plasmid_ctgs.fasta \
+        input_chr_contigs_fa="$rel/{input.chr_contigs}" \
+        input_plasmid_contigs_fa="$rel/{input.plasmid_contigs}" \
+        params_max_plasmid_len={params.max_plasmid_len} \
+        params_config_sh_fn="$rel/{input.config_sh_fn}" \
+            ipa-task dedup_plasmids
+    """
+
+rule collect_contigs:
+    output:
+        collected_ctgs = "collect_contigs/collected_ctg.fasta",
+    input:
+        chr_contigs = rules.filter_draft_contigs.output.p_ctg_filtered_fa,
+        plasmid_contigs = rules.dedup_plasmids.output.out_ctgs,
+    shell: """
+        mkdir -p collect_contigs
+        cd collect_contigs
+        rel=..
+
+        output_collected_contigs_fa=collected_ctg.fasta \
+        input_chr_contigs_fa="$rel/{input.chr_contigs}" \
+        input_plasmid_contigs_fa="$rel/{input.plasmid_contigs}" \
+            ipa-task collect_contigs
+    """
+
+rule create_datasets_all:
+    output:
+        subreadset_xml = "create_datasets_all/raw.subreadset.xml",
+        contigset_xml = "create_datasets_all/contigs.referenceset.xml",
+    input:
+        p_ctg_fa = rules.collect_contigs.output.collected_ctgs,
+        reads_fofn=reads_fn,
+    shell: """
+        mkdir -p create_datasets_all/
+        cd create_datasets_all/
+        rel=..
+
+        bams=$(cat $rel/{input.reads_fofn} | xargs)
+        dataset create --force raw.subreadset.xml $bams
+
+        dataset \
+          create \
+          --force \
+          --generateIndices \
+          --type ReferenceSet \
+          --name draft_assembly \
+          contigs.referenceset.xml \
+          $rel/{input.p_ctg_fa}
+        #          --log-level {{log_level}} \
+
+        # Note: Pbmm2 doesn't allow multiple reference files in a single referenceset (i.e. both p_ctg_fa and a_ctg_fa).
+    """
+
+rule mapping_all:
+    output:
+        mapped = "mapping_all/mapped.xml",
+        mapped_fofn = "mapping_all/mapped.fofn",
+    input:
+        reads = rules.create_datasets_all.output.subreadset_xml,
+        reference = rules.create_datasets_all.output.contigset_xml,
+    params:
+        aln_ext = ".alignmentset.xml",
+        #mapping_stats_module = "mapping_stats_hgap",
+        #coverage_report_module = "coverage_hgap",
+        biosample_name = "Biosample",
+        min_concordance = 0.80,
+        min_length = 50,
+        nproc = NUM_THREADS,
+        max_nchunks = MAX_NCHUNKS_POLISHING,
+        log_level = "INFO",
+        hq_mode = "",
+        zmw_mode = "",
+        preset_mode = "",
+    shell: """
+        mkdir -p mapping_all/
+        cd mapping_all/
+        rel='..'
+
+        unmapped=$rel/{input.reads}
+
+        if [[ "true" == "{params.zmw_mode}" ]]; then
+            zmw_mode_flag="--zmw"
+        else
+            zmw_mode_flag=""
+        fi
+        if [[ "true" == "{params.hq_mode}" ]]; then
+            hq_mode_flag="--hqregion"
+        else
+            hq_mode_flag=""
+        fi
+        if [[ -n "{params.preset_mode}" ]]; then
+            preset_mode_flag="--preset"
+        else
+            preset_mode_flag=""
+        fi
+
+        pbmm2 \
+      align \
+      $rel/{input.reference} \
+      $unmapped \
+      mapped{params.aln_ext} \
+      --sort \
+      --min-concordance-perc {params.min_concordance} \
+      --min-length {params.min_length} \
+      --sample "{params.biosample_name}" \
+      $hq_mode_flag \
+      $zmw_mode_flag \
+      $preset_mode_flag \
+      -j {params.nproc} \
+      --log-level {params.log_level}
+
+        ln -f mapped{params.aln_ext} mapped.xml
+        echo $(pwd)/mapped.xml >| mapped.fofn
+    """
+
+rule collect_gfa:
+    output:
+        collected = "collect_gfa/all_contig.gfa2",
+    input:
+        chr_gfa = rules.assemble_chr.output.contig_gfa2,
+        plasmid_gfa = rules.assemble_plasmid.output.contig_gfa2,
+    shell: """\
+        mkdir -p collect_gfa/
+        cd collect_gfa/
+        rel=..
+
+        input_chr_gfa="$rel/{input.chr_gfa}" \
+        input_plasmid_gfa="$rel/{input.plasmid_gfa}" \
+            ipa-task collect_gfa
+    """
+rule collect_circ_list:
+    output:
+        collected = "collect_circ_list/collected_circ.txt",
+    input:
+        chr_circ_fn = rules.assemble_chr.output.circular_contigs,
+        plasmid_circ_fn = rules.assemble_plasmid.output.circular_contigs,
+    shell: """\
+        mkdir -p collect_circ_list/
+        cd collect_circ_list/
+        rel=..
+
+        output_collected_circ=collected_circ.txt \
+        input_chr_circ="$rel/{input.chr_circ_fn}" \
+        input_plasmid_circ="$rel/{input.plasmid_circ_fn}" \
+            ipa-task collect_circ_list
+    """
+rule raptor_graph_mapping_all:
+    output:
+        mapped = "raptor_graph_mapping_all/mapped.alignmentset.xml",
+        #mapped_fofn = "raptor_graph_mapping_all/mapped.fofn",
+    input:
+        reference = rules.collect_contigs.output.collected_ctgs,
+        gfa = rules.collect_gfa.output.collected,
+        reads = rules.assemble_chr.output.rdb_full,
+    params:
+        raptor = "--align",
+        min_idt = 0.80,  #min_concordance
+        min_length = 50,
+        nproc = NUM_THREADS,
+    shell: """\
+        mkdir -p raptor_graph_mapping_all/
+        cd raptor_graph_mapping_all/
+        rel='..'
+
+        output_xml="mapped.alignmentset.xml" \
+        input_reference="$rel/{input.reference}" \
+        input_gfa="$rel/{input.gfa}" \
+        input_reads="$rel/{input.reads}" \
+        params_raptor_opt="{params.raptor}" \
+        params_min_idt={params.min_idt} \
+        params_min_length={params.min_length} \
+        params_nproc={params.nproc} \
+            ipa-task raptor_graph_mapping
+    """
+
+rule consensus_all:
+    output:
+      consensus_fasta = "consensus_all/consensus.fasta",
+      consensus_fastq = "consensus_all/consensus.fastq",
+      #variants_gff = "consensus_all/consensus.gff",
+      #variants_vcf = "consensus_all/consensus.vcf",
+    input:
+        alignments = rules.raptor_graph_mapping_all.output.mapped,
+        reference = rules.create_datasets_all.output.contigset_xml,
+    params:
+        consensus_algorithm = "arrow",
+        log_level = 'INFO',
+        nproc = 8, #num_threads,
+        max_nchunks = MAX_NCHUNKS_POLISHING,
+        target_size = 1, #?
+    shell: """\
+        mkdir -p consensus_all/
+        cd consensus_all/
+        rel='..'
+
+        gcpp   -j {params.nproc}   --algorithm arrow   -r $rel/{input.reference} $rel/{input.alignments}   -o consensus.fasta,consensus.fastq,consensus.gff,consensus.vcf
+    """
+rule circ_oric:
+    output:
+        p_ctg_oric_fa = "circ_oric/p_ctg_oric.fasta",
+        pbreport_json = "circ_oric/contigs.report.json",
+    input:
+        #whitelist = rules.assemble_chr.output.circular_contigs,
+        whitelist = rules.collect_circ_list.output.collected,
+        p_ctg_fa = rules.consensus_all.output.consensus_fasta,
+    shell: """\
+        mkdir -p circ_oric/
+        cd circ_oric/
+        rel='..'
+
+        input_fa="$rel/{input.p_ctg_fa}" \
+        input_whitelist="$rel/{input.whitelist}" \
+        output_fa="p_ctg_oric.fasta" \
+        output_json="contigs.report.json" \
+            ipa-task circ_oric
+    """
+rule rename_for_ncbi:
+    output:
+        assembly = "rename_for_ncbi/assembly.rotated.polished.renamed.fsa"
+    input:
+        circ_list_fn = rules.collect_circ_list.output.collected,
+        ctg_fa = rules.circ_oric.output.p_ctg_oric_fa,
+    shell: """\
+        mkdir -p rename_for_ncbi/
+        cd rename_for_ncbi/
+        rel='..'
+
+        input_circular_fn="$rel/${input.circ_list_fn}" \
+        input_fa="$rel/${input.ctg_fa}" \
+            ipa-task rename_for_ncbi
+    """
+rule finish:
+    input:
+        #"ovlcns_raw_merge/ercreads.fasta",
+        #rules.ovlcns_raw_merge.output.gathered_fasta,
+        #rules.build_erc_rdb.output.rdb,
+        #rules.ovl_erc_merge.output.gathered_m4,
+        ##rules.assemble.output.p_ctg_fa,
+        rules.create_datasets.output.contigset_xml,
+        rules.get_unaligned_reads_from_dataset.output.exclude_subreads_fofn,
+        rules.assemble_plasmid.output.p_ctg_fa,
+        rules.create_datasets_all.output.contigset_xml,
+        #rules.mapping_all.output.mapped,
+        rules.consensus_all.output.consensus_fasta,
+        rules.circ_oric.output.p_ctg_oric_fa

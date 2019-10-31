@@ -1,0 +1,20 @@
+{
+    "__default__" :
+    {
+    "S"   : "/bin/bash",
+        "N"   : "racon_polish",
+	"P"   : "-cwd",
+	"Q"   : "default",
+	"CPU" : "-pe smp 1",
+	"E"   : "logs",
+ 	"O"   : "logs"
+     },    
+    "aln"  :
+    {
+        "CPU"  : "-pe smp 4"
+    },
+    "polish" : 
+    {
+	"CPU" : "-pe smp 4"
+    }
+}
